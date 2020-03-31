@@ -14,6 +14,7 @@
 ## Articles on more specific topics
 
 - [Relevance cuts (a graph pruning technique)](https://core.ac.uk/download/pdf/82273659.pdf)
+- [POP algorithm implemented in Python](https://github.com/aimacode/aima-python/blob/master/planning.py)
 
 ---
 ## Other
