@@ -10,6 +10,20 @@ class Dir:
         self.d_row = d_row
         self.d_col = d_col
     
+    def get_inverse(self):
+        name = self.name
+        if name == 'N':
+            name = 'S'
+        elif name == 'S':
+            name = 'N'
+        elif name == 'E':
+            name = 'W'
+        else:
+            name = 'E'
+        d_row = self.d_row * -1
+        d_col = self.d_col * -1
+        return Dir(name, d_row, d_col)
+            
     def __repr__(self):
         return self.name
 
@@ -28,6 +42,14 @@ class ActionType:
         Use ActionType.Move, ActionType.Push, and ActionType.Pull instead.
         '''
         self.name = name
+        
+    def get_inverse(self):
+        name = self.name
+        if name == 'Push':
+            name = 'Pull'
+        elif name == 'Pull':
+            name = 'Push'
+        return ActionType(name)
     
     def __repr__(self):
         return self.name
@@ -50,6 +72,18 @@ class Action:
             self._repr = '[{}({},{})]'.format(action_type, agent_dir, box_dir)
         else:
             self._repr = '[{}({})]'.format(action_type, agent_dir)
+    
+    def get_inverse(self):
+        box_dir = None
+        if self.box_dir is not None:
+            box_dir = self.box_dir.get_inverse()
+            
+        inverse = Action(
+                self.action_type.get_inverse(),
+                self.agent_dir.get_inverse(),
+                box_dir)
+        
+        return inverse
     
     def __repr__(self):
         return self._repr

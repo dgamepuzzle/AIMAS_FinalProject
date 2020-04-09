@@ -1,6 +1,7 @@
 import argparse
 import re
 import sys
+from collections import defaultdict
 
 import memory
 from state import State
@@ -26,7 +27,6 @@ class SearchClient:
             
         rows = len(lines)
         cols = len(lines[0])
-        
         
         colors_re = re.compile(r'^[a-z]+:\s*[0-9A-Z](\s*,\s*[0-9A-Z])*\s*$')
         try:
@@ -90,6 +90,146 @@ class SearchClient:
             
             iterations += 1
 
+    def bi_search(self, strategy1: 'Strategy', strategy2: 'Strategy') -> '[State, ...]':
+        print('Starting bidirectional search with strategy {}. and strategy {}.'.format(strategy1, strategy2), file=sys.stderr, flush=True)
+        strategy1.add_to_frontier(self.initial_state)
+        
+        # To search backwards, we have to define our goal state
+        
+        # Create a "database" of vacant goals
+        vacant_goal_coords = defaultdict(list)
+        goal_coords = []
+        
+        # Loop through the goals, and save their coordinates
+        for i in range(len(State.goals)):
+            for j in range(len(State.goals[i])):
+                if State.goals[i][j] is None:
+                    continue
+                if State.goals[i][j] in 'abcdefghijklmnopqrstuvwxyz':
+                    vacant_goal_coords[State.goals[i][j]].append((i, j))
+                    goal_coords.append((i, j))
+
+        # Create new goal state with each goal having a corresponding box                    
+        goal_state = State(copy=self.initial_state)
+        goal_state.parent = None
+        
+        for i in range(len(goal_state.boxes)):
+            for j in range(len(goal_state.boxes[i])):
+                if goal_state.boxes[i][j] is None:
+                    continue
+                if goal_state.boxes[i][j] in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+                    box_type = goal_state.boxes[i][j]
+                    if not len(vacant_goal_coords[box_type]):
+                        continue
+                    goal_coord = vacant_goal_coords[box_type].pop()
+                    goal_state.boxes[goal_coord[0], goal_coord[1]] = box_type
+                    goal_state.boxes[i][j] = None
+                    
+        
+        # We need to set realistic agent positions for our goal state!
+        agent_offsets = [(0, 1), (1, 0), (1, 1), (0, -1), (-1, 0), (-1, -1), 
+                         (-1, 1), (1, -1)]
+        
+        # It is realistic to assume that our agent would be next to one of our
+        # goals. Therefore we can generate goals
+        for goal_coord in goal_coords:
+            for agent_offset in agent_offsets:
+                agent_new_row = goal_coord[0] + agent_offset[0]
+                agent_new_col = goal_coord[1] + agent_offset[1]
+                
+                if agent_new_row >= len(goal_state.goals):
+                    continue
+                if agent_new_col >= len(goal_state.goals[agent_new_row]):
+                    continue
+                if goal_state.walls[agent_new_row][agent_new_col]:
+                    continue
+                if goal_state.goals[agent_new_row][agent_new_col] is not None:
+                    continue
+                #if goal_state.boxes[agent_new_row][agent_new_col] is not None:
+                #    print('Box', file=sys.stderr, flush=True)
+                #    continue
+                
+                another_goal_state = State(copy=goal_state)
+                another_goal_state.agent_row = agent_new_row
+                another_goal_state.agent_col = agent_new_col
+                
+                strategy2.add_to_frontier(another_goal_state)
+        
+        iterations = 0
+        while True:
+            if iterations == 1000:
+                print(strategy1.search_status(), file=sys.stderr, flush=True)
+                print(strategy2.search_status(), file=sys.stderr, flush=True)
+                iterations = 0
+            
+            if memory.get_usage() > memory.max_usage:
+                print('Maximum memory usage exceeded.', file=sys.stderr, flush=True)
+                return None
+            
+            if strategy1.frontier_empty():
+                print('Strategy1 frontier empty.', file=sys.stderr, flush=True)
+                return None
+            
+            if strategy2.frontier_empty():
+                print('Strategy2 frontier empty.', file=sys.stderr, flush=True)
+                return None
+            
+            leaf1 = strategy1.get_and_remove_leaf()            
+            leaf2 = strategy2.get_and_remove_leaf()
+            
+            if leaf1 == leaf2:
+                first_half = leaf1.extract_plan()
+                second_half = leaf2.extract_plan()
+                
+                print("First half", file=sys.stderr, flush=True)
+    
+                for state in [self.initial_state] + first_half:
+                    print(state.action, file=sys.stderr, flush=True)
+                    for i in range(len(state.boxes)):
+                        for j in range(len(state.boxes[i])):
+                            if state.boxes[i][j] is not None:
+                                print('agent(%d, %d) box(%d, %d)' % (state.agent_row, state.agent_col, i, j), file=sys.stderr, flush=True)
+                                break
+                        if state.boxes[i][j] is not None:
+                            break
+                
+                second_half.reverse()
+                
+                for state in second_half:
+                    for i in range(len(state.boxes)):
+                        for j in range(len(state.boxes[i])):
+                            if state.boxes[i][j] is not None:
+                                print('agent(%d, %d) box(%d, %d)' % (state.agent_row, state.agent_col, i, j), file=sys.stderr, flush=True)
+                                break
+                        if state.boxes[i][j] is not None:
+                            break
+                
+                for i in range(1, len(second_half)):
+                    second_half[i].parent = second_half[i-1]
+                    second_half[i].action = second_half[i].action.get_inverse()
+                    
+                solution = first_half + second_half
+                
+                #for state in solution:
+                #    print(state.action, file=sys.stderr, flush=None)
+                
+                print('Solution found.', file=sys.stderr, flush=True)
+                print(second_half[-1].agent_row, second_half[-1].agent_col, file=sys.stderr, flush=True)
+                return solution
+            
+            strategy1.add_to_explored(leaf1)
+            strategy2.add_to_explored(leaf2)
+            
+            for child_state in leaf1.get_children(): # The list of expanded states is shuffled randomly; see state.py.
+                if not strategy1.is_explored(child_state) and not strategy1.in_frontier(child_state):
+                    strategy1.add_to_frontier(child_state)
+                    
+            for child_state in leaf2.get_children(): # The list of expanded states is shuffled randomly; see state.py.
+                if not strategy2.is_explored(child_state) and not strategy2.in_frontier(child_state):
+                    strategy2.add_to_frontier(child_state)
+            
+            iterations += 1
+
 
 def main(strategy_str: 'str'):
     # Read server messages from stdin.
@@ -116,8 +256,12 @@ def main(strategy_str: 'str'):
         # Default to BFS strategy.
         strategy = StrategyBFS()
         print('Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.', file=sys.stderr, flush=True)
-    
-    solution = client.search(strategy)
+
+    if strategy_str == 'bi':
+        solution = client.bi_search(strategy, StrategyBFS())
+    else:
+        solution = client.search(strategy)
+        
     if solution is None:
         print(strategy.search_status(), file=sys.stderr, flush=True)
         print('Unable to solve level.', file=sys.stderr, flush=True)
@@ -146,6 +290,7 @@ if __name__ == '__main__':
     strategy_group.add_argument('-astar', action='store_const', dest='strategy', const='astar', help='Use the A* strategy.')
     strategy_group.add_argument('-wastar', action='store_const', dest='strategy', const='wastar', help='Use the WA* strategy.')
     strategy_group.add_argument('-greedy', action='store_const', dest='strategy', const='greedy', help='Use the Greedy strategy.')
+    strategy_group.add_argument('-bi', action='store_const', dest='strategy', const='bi', help='Use the Bidirectional strategy.')
     
     args = parser.parse_args()
     
