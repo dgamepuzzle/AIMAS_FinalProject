@@ -129,12 +129,17 @@ class State:
     def box_at(self, row: 'int', col: 'int') -> 'bool':
         return self.boxes[row][col] is not None
     
-    def extract_plan(self) -> '[State, ...]':
+    def extract_plan(self, include_initial=False) -> '[State, ...]':
         plan = []
         state = self
-        while not state.is_initial_state():
-            plan.append(state)
-            state = state.parent
+        if not include_initial:
+            while not state.is_initial_state():
+                plan.append(state)
+                state = state.parent
+        else:
+            while state is not None:
+                plan.append(state)
+                state = state.parent
         plan.reverse()
         return plan
     
@@ -145,8 +150,8 @@ class State:
             _hash = _hash * prime + self.agent_row
             _hash = _hash * prime + self.agent_col
             _hash = _hash * prime + hash(tuple(tuple(row) for row in self.boxes))
-            _hash = _hash * prime + hash(tuple(tuple(row) for row in State.goals))
-            _hash = _hash * prime + hash(tuple(tuple(row) for row in State.walls))
+            #_hash = _hash * prime + hash(tuple(tuple(row) for row in State.goals))
+            #_hash = _hash * prime + hash(tuple(tuple(row) for row in State.walls))
             self._hash = _hash
         return self._hash
     

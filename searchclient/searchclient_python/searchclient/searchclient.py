@@ -119,12 +119,12 @@ class SearchClient:
                     continue
                 if goal_state.boxes[i][j] in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
                     box_type = goal_state.boxes[i][j]
-                    if not len(vacant_goal_coords[box_type]):
+                    goal_type = box_type.lower()
+                    if not len(vacant_goal_coords[goal_type]):
                         continue
-                    goal_coord = vacant_goal_coords[box_type].pop()
-                    goal_state.boxes[goal_coord[0], goal_coord[1]] = box_type
+                    goal_coord = vacant_goal_coords[goal_type].pop()
+                    goal_state.boxes[goal_coord[0]][goal_coord[1]] = box_type
                     goal_state.boxes[i][j] = None
-                    
         
         # We need to set realistic agent positions for our goal state!
         agent_offsets = [(0, 1), (1, 0), (1, 1), (0, -1), (-1, 0), (-1, -1), 
@@ -151,8 +151,7 @@ class SearchClient:
                 
                 another_goal_state = State(copy=goal_state)
                 another_goal_state.agent_row = agent_new_row
-                another_goal_state.agent_col = agent_new_col
-                
+                another_goal_state.agent_col = agent_new_col                
                 strategy2.add_to_frontier(another_goal_state)
         
         iterations = 0
@@ -168,6 +167,9 @@ class SearchClient:
             
             if strategy1.frontier_empty():
                 print('Strategy1 frontier empty.', file=sys.stderr, flush=True)
+                print(strategy1.explored_count(), file=sys.stderr, flush=True)
+                print(strategy2.explored_count(), file=sys.stderr, flush=True)
+                
                 return None
             
             if strategy2.frontier_empty():
@@ -176,34 +178,16 @@ class SearchClient:
             
             leaf1 = strategy1.get_and_remove_leaf()            
             leaf2 = strategy2.get_and_remove_leaf()
-            
-            if leaf1 == leaf2:
-                first_half = leaf1.extract_plan()
-                second_half = leaf2.extract_plan()
+
+            if strategy1.in_frontier(leaf2):
+                print("LEAF 2 found in STRATEGY 1", file=sys.stderr, flush=True)
                 
-                print("First half", file=sys.stderr, flush=True)
-    
-                for state in [self.initial_state] + first_half:
-                    print(state.action, file=sys.stderr, flush=True)
-                    for i in range(len(state.boxes)):
-                        for j in range(len(state.boxes[i])):
-                            if state.boxes[i][j] is not None:
-                                print('agent(%d, %d) box(%d, %d)' % (state.agent_row, state.agent_col, i, j), file=sys.stderr, flush=True)
-                                break
-                        if state.boxes[i][j] is not None:
-                            break
+                leaf_pre = strategy1.frontier[strategy1.frontier.index(leaf2)]
+                first_half = leaf_pre.extract_plan()
+                second_half = leaf2.extract_plan(include_initial=True)
                 
                 second_half.reverse()
-                
-                for state in second_half:
-                    for i in range(len(state.boxes)):
-                        for j in range(len(state.boxes[i])):
-                            if state.boxes[i][j] is not None:
-                                print('agent(%d, %d) box(%d, %d)' % (state.agent_row, state.agent_col, i, j), file=sys.stderr, flush=True)
-                                break
-                        if state.boxes[i][j] is not None:
-                            break
-                
+
                 for i in range(1, len(second_half)):
                     second_half[i].parent = second_half[i-1]
                     second_half[i].action = second_half[i].action.get_inverse()
@@ -212,6 +196,68 @@ class SearchClient:
                 
                 #for state in solution:
                 #    print(state.action, file=sys.stderr, flush=None)
+                
+                print('Solution found.', file=sys.stderr, flush=True)
+                print(second_half[-1].agent_row, second_half[-1].agent_col, file=sys.stderr, flush=True)
+                return solution
+            
+            if strategy2.in_frontier(leaf1):
+                print("LEAF 1 found in STRATEGY 2", file=sys.stderr, flush=True)
+
+                leaf_post = strategy2.frontier[strategy2.frontier.index(leaf1)]
+                
+                first_half = leaf1.extract_plan()
+                
+                second_half = leaf_post.extract_plan(include_initial=True)
+                second_half.reverse()
+                
+                print(len(second_half), file=sys.stderr, flush=True)
+                
+                for i in range(len(second_half)-1, -1, -1):
+                    print(i, file=sys.stderr, flush=True)
+                    second_half[i].parent = second_half[i-1]
+                    if second_half[i].action is not None:
+                        print(second_half[i].action.get_inverse(), file=sys.stderr, flush=True)
+                        setattr(second_half[i], 'action',second_half[i].action.get_inverse())
+                #second_half = second_half[1:]
+
+                #for state in second_half:
+                #    print(state.action, file=sys.stderr, flush=True)                
+                
+                for state in first_half:
+                    for i in range(len(state.boxes)):
+                        for j in range(len(state.boxes[i])):
+                            if state.boxes[i][j] is not None:
+                                break
+                        if state.boxes[i][j] is not None:
+                            break
+                    print(state.action, file=sys.stderr, flush=True)
+                    print("Agent at: (%d, %d), Box at: (%d, %d)" % (state.agent_row, state.agent_col, i, j), file=sys.stderr, flush=True)
+                    
+                print("Second half:", file=sys.stderr, flush=True)
+                
+                for state in second_half:
+                    for i in range(len(state.boxes)):
+                        for j in range(len(state.boxes[i])):
+                            if state.boxes[i][j] is not None:
+                                break
+                        if state.boxes[i][j] is not None:
+                            break
+                    print(state.action, file=sys.stderr, flush=True)
+                    print("Agent at: (%d, %d), Box at: (%d, %d)" % (state.agent_row, state.agent_col, i, j), file=sys.stderr, flush=True)
+                    
+                solution = first_half + second_half
+                
+                print("\nSolution", file=sys.stderr, flush=True)
+                for state in solution:
+                    for i in range(len(state.boxes)):
+                        for j in range(len(state.boxes[i])):
+                            if state.boxes[i][j] is not None:
+                                break
+                        if state.boxes[i][j] is not None:
+                            break
+                    print(state.action, file=sys.stderr, flush=True)
+                    print("Agent at: (%d, %d), Box at: (%d, %d)" % (state.agent_row, state.agent_col, i, j), file=sys.stderr, flush=True)
                 
                 print('Solution found.', file=sys.stderr, flush=True)
                 print(second_half[-1].agent_row, second_half[-1].agent_col, file=sys.stderr, flush=True)

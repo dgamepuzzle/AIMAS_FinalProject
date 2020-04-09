@@ -23,6 +23,12 @@ class Dir:
         d_row = self.d_row * -1
         d_col = self.d_col * -1
         return Dir(name, d_row, d_col)
+    
+    def copy(self):
+        name = self.name
+        d_row = self.d_row
+        d_col = self.d_col
+        return Dir(name, d_row, d_col)
             
     def __repr__(self):
         return self.name
@@ -76,7 +82,7 @@ class Action:
     def get_inverse(self):
         box_dir = None
         if self.box_dir is not None:
-            box_dir = self.box_dir.get_inverse()
+            box_dir = self.box_dir.copy()
             
         inverse = Action(
                 self.action_type.get_inverse(),
