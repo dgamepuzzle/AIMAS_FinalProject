@@ -11,7 +11,6 @@ from heuristic import AStar, WAStar, Greedy
 class SearchClient:
     def __init__(self, server_messages):
         self.initial_state = None
-        
         colors_re = re.compile(r'^[a-z]+:\s*[0-9A-Z](\s*,\s*[0-9A-Z])*\s*$')
         try:
             # Read lines for colors. There should be none of these in warmup levels.
@@ -97,9 +96,13 @@ def main(strategy_str: 'str'):
     # Read server messages from stdin.
     server_messages = sys.stdin
     
+    sys.stderr.write("ayy??\n")
+    
     # Use stderr to print to console through server.
     print('SearchClient initializing. I am sending this using the error output stream.', file=sys.stderr, flush=True)
     
+    
+    print("ayylmao", file=sys.stdout, flush=True)
     # Read level and create the initial state of the problem.
     client = SearchClient(server_messages);
 

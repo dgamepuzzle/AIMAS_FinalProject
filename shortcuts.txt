@@ -1,2 +1,2 @@
 ##RUN A SIMPLE level##
-java -jar server.jar -c "python OldSearchClient\searchclient_python\searchclient\searchclient" -l "Old competition levels and competition results\levels\SAD1.lvl" -g
+java -jar server.jar -c "py OldSearchClient\searchclient_python\searchclient\searchclient.py" -l "Old competition levels and competition results\levels\SAD1.lvl" -g
