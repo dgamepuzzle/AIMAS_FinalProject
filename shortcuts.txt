@@ -1,2 +1,6 @@
-##RUN A SIMPLE level##
+##RUN A SIMPLE level(old client)##
 java -jar server.jar -c "py OldSearchClient\searchclient_python\searchclient\searchclient.py" -l "Old competition levels and competition results\levels\SAD1.lvl" -g
+
+
+##RUN A SIMPLE level (new client)##
+java -jar server.jar -c "py NewSearchClient\mainsearchclient.py" -l "Old competition levels and competition results\levels\SAD1.lvl" -g -s 100
