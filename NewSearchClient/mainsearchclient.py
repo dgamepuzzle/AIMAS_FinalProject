@@ -1,7 +1,9 @@
 import argparse
 import re
 import sys
-import memory
+
+import configuration
+from planning import Plan
 
 GROUPNAME = "AIStars"
 
@@ -12,24 +14,22 @@ GROUPNAME = "AIStars"
 #5.celebrate
 
 def main(strategy_str: 'str'):
-    #send name to server
+    #Send name to server
     print(GROUPNAME, file=sys.stdout, flush=True)
     
-    #read the level data 
-    #TODO translate this into a state 
+    #Read the level data 
     server_messages = sys.stdin
     
-    line = server_messages.readline().rstrip()
-    while line != "#end":
-        print(line, file=sys.stderr, flush=True)
-        line = server_messages.readline().rstrip()
-         
-    #TODO solve level
+    #Create a plan to solve the level
+    planner = Plan(server_messages, strategy_str)
     
+    #Solve the level
+    commands = planner.resolve()
     
-    #Send commands
+    #Send commands to server
+    send_to_server(commands)
     
-        #Dummy commands
+    '''#Dummy commands
     for i in range (13):
         print("Move(E)", file=sys.stdout, flush=True)
         
@@ -39,13 +39,13 @@ def main(strategy_str: 'str'):
     for i in range(3):
         print("Move(E)", file=sys.stdout, flush=True)
         
-    print("Push(S,S)", file=sys.stdout, flush=True)
+    print("Push(S,S)", file=sys.stdout, flush=True)'''
 
-    #Done level complete
+    #level complete
 
 if __name__ == '__main__':
     # Program arguments, reads the arguments from the command prompt through the argparse module.
-    #This code is taken directly from the warmup assignment.
+    ##This code is taken directly from the warmup assignment.
     parser = argparse.ArgumentParser(description='Simple client based on state-space graph search.')
     parser.add_argument('--max-memory', metavar='<MB>', type=float, default=2048.0, help='The maximum memory usage allowed in MB (soft limit, default 2048).')
     
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     
     
     # Set max memory usage allowed (soft limit).
-    memory.max_usage = args.max_memory
+    configuration.max_memory_usage = args.max_memory
     
     # Run client.
     main(args.strategy)
