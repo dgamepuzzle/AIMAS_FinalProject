@@ -57,25 +57,7 @@ class Plan:
                     self.MAX_COL=longestLine
                     self.MAX_ROW=len(lines)
                     # Read lines for initial state
-                    self.initial_state = State()
-                    for row, line in enumerate(lines):
-                        for col, char in enumerate(line):
-                            if char == '+': self.initial_state.walls[row][col] = True
-                            elif char in "0123456789":
-                                self.initial_state.agents_row[int(char)] = row
-                                self.initial_state.agents_col[int(char)] = col
-                                if self.num_agents is None:
-                                    self.num_agents = 1
-                                else:
-                                    self.num_agents += 1
-                            elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ": self.initial_state.boxes[row][col] = char
-                            elif char in "abcdefghijklmnopqrstuvwxyz": self.initial_state.goals[row][col] = char
-                            elif char == ' ':
-                                # Free cell.
-                                pass
-                            else:
-                                print('Error, read invalid level character: {}'.format(char), file=sys.stderr, flush=True)
-                                sys.exit(1)
+                    self.initial_state = State(self.MAX_ROW, self.MAX_COL, lines)
                 
                 #Read lines for goal state
                 if line == "#goal":
@@ -84,17 +66,7 @@ class Plan:
                         lines.append(currentLine)
                         currentLine = server_messages.readline().rstrip()
                     line = currentLine
-                    self.goal_state = State()
-                    for row, line in enumerate(lines):
-                        for col, char in enumerate(line):
-                            if char == '+': self.goal_state.walls[row][col] = True
-                            elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ": self.initial_state.boxes[row][col] = char
-                            elif char == ' ':
-                                # Free cell.
-                                pass
-                            else:
-                                print('Error, read invalid level character: {}'.format(char), file=sys.stderr, flush=True)
-                                sys.exit(1)
+                    self.goal_state = State(self.MAX_ROW, self.MAX_COL, lines)
                     
         
         except Exception as ex:

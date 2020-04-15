@@ -1,5 +1,5 @@
 import argparse
-import re
+#import re
 import sys
 
 import configuration
