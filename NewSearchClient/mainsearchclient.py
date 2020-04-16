@@ -3,6 +3,7 @@ import argparse
 import sys
 
 import configuration
+from communicator import Communicator
 from planning import Plan
 
 GROUPNAME = "AIStars"
@@ -14,20 +15,19 @@ GROUPNAME = "AIStars"
 #5.celebrate
 
 def main(strategy_str: 'str'):
-    #Send name to server
-    print(GROUPNAME, file=sys.stdout, flush=True)
     
     #Read the level data 
-    server_messages = sys.stdin
+    com = Communicator()
+    com.ReadServerMessage()
     
     #Create a plan to solve the level
-    planner = Plan(server_messages, strategy_str)
+    planner = Plan(com.starting_state, com.goal_state, strategy_str)
     
     #Solve the level
     commands = planner.resolve()
     
     #Send commands to server
-    send_to_server(commands)
+    #send_to_server(commands)
     
     '''#Dummy commands
     for i in range (13):

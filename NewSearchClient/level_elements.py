@@ -20,8 +20,7 @@ class Box:
 
 
 class Goal:
-    def __init__(self, letter: 'str', color: 'str', coords):
+    def __init__(self, letter: 'str', coords):
         self.letter = letter
-        self.color = color
         self.coords = coords
     
