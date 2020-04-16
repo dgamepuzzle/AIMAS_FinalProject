@@ -53,8 +53,10 @@ class Plan:
                 return None
             
             leaf = strategy.get_and_remove_leaf()
+            print('get and remove leaf()', file=sys.stderr, flush=True)
             
             if leaf.is_goal_state():
+                print('found goal', file=sys.stderr, flush=True)
                 return leaf.extract_plan()
             
             strategy.add_to_explored(leaf)

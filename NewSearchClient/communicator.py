@@ -80,7 +80,7 @@ class Communicator:
                     sys.exit(1)
         '''
         #save goal state
-        Communicator.goal_state = State(None, goal_state_text)
+        Communicator.goal_state = State(None, goal_state_text, goal_state=True)
         '''
         for row, line in enumerate(goal_state_text):
             for col, char in enumerate(line):
