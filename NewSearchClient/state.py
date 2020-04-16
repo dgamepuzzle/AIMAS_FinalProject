@@ -4,6 +4,7 @@ Created on Sat Apr 11 17:14:20 2020
 
 @author: AIStars group
 """
+from itertools import product
 
 import itertools
 import sys
@@ -11,15 +12,16 @@ import sys
 from graph import Graph
 from jointaction import ActionType, ALL_ACTIONS
 from level_elements import Agent, Box, Goal
-
+from jointaction import ALL_ACTIONS, ActionType, JointAction 
 
 class State:
     MAX_ROW = None
     MAX_COL = None
     goals = []
     colors = []
+    walls = []
     
-    def __init__(self, copy: 'State', level_lines):
+    def __init__(self, copy: 'State', level_lines, goal_state = False):
         
         if copy ==None:
             self.graph = Graph()
@@ -27,12 +29,15 @@ class State:
             self.boxes = []
             self.parent = None
             self.jointaction = []
+
             self.g = 0
             self.h = -1
+            
+            State.walls = [[False for _ in range(State.MAX_COL)] for _ in range(State.MAX_ROW)]
+            
             #Parse full level (build graph and save mobile entities)
             try:
                 for row, line in enumerate(level_lines):
-                    print(str(line), file=sys.stderr, flush=True)
                     for col, char in enumerate(line):
                         if char != '+':
                             cur_node = self.graph.coords2id(col,row,State.MAX_COL)
@@ -55,9 +60,9 @@ class State:
                             elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
                                 color = State.colors[char]
                                 self.boxes.append(Box(char, color, (row, col)))
-                            #Parse goals
-                            elif char in "abcdefghijklmnopqrstuvwxyz":
-                                State.goals.append(Goal(char,(row, col)))
+                                if goal_state: #Parse goals
+                                    print("adding goal to array", file=sys.stderr, flush=True)
+                                    State.goals.append(Goal(char,(row, col)))
                             #Parse spaces
                             elif (char ==' '):
                                 #Do nothing after creating the node
@@ -67,6 +72,7 @@ class State:
                                 sys.exit(1)
                         else:
                             # Walls are not being processed
+                            State.walls[row][col] = True
                             pass
                 
             except Exception as ex:
@@ -87,6 +93,7 @@ class State:
         Returns a list of child states attained from applying every combination of applicable actions in the current state.
         The order of the actions within the joint action is random.
         '''
+        print('get children', file=sys.stderr, flush=True)
         children = []
         joint_actions = []
         num_agents = len(self.agents)
@@ -172,15 +179,31 @@ class State:
         return self.parent is None
     
     def is_goal_state(self) -> 'bool':
+        print(str(State.goals), file=sys.stderr, flush=True)
+        print(str(self.boxes), file=sys.stderr, flush=True)
         for goal in State.goals:
             for box in self.boxes:
+                
                 if(goal.letter == box.letter.lower() and goal.coords == box.coords):
+                    print(goal.letter +" = "+ box.letter.lower(), file=sys.stderr, flush=True)
+                    print(goal.coords +" = "+  box.coords, file=sys.stderr, flush=True)
                     break
+            
             return False    
         return True
+
+    def extract_plan(self) -> '[State, ...]':
+        plan = []
+        state = self
+        while not state.is_initial_state():
+            plan.append(state)
+            state = state.parent
+        plan.reverse()
+        return plan
     
     def is_free(self, row: 'int', col: 'int') -> 'bool':
         return self.graph.contains_node(row,col, self.MAX_COL) and not any(box.coords == (row,col) for box in self.boxes) and not any(agent.coords == (row,col) for agent in self.agents)
     
     def box_at(self, row: 'int', col: 'int') -> 'bool':
         return any(box.coords == (row,col) for box in self.boxes)
+
