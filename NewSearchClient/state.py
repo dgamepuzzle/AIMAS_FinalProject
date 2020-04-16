@@ -8,7 +8,7 @@ Created on Sat Apr 11 17:14:20 2020
 import sys
 
 from graph import Graph
-from level_entities import Agent, Box, Goal
+from level_elements import Agent, Box, Goal
 
 
 class State:
@@ -24,7 +24,8 @@ class State:
         #Parse full level (build graph and save mobile entities)
         try:
             for row, line in enumerate(level_lines):
-                for col, char in enumerate(level_lines):
+                print(str(line), file=sys.stderr, flush=True)
+                for col, char in enumerate(line):
                     if char != '+':
                         cur_node = self.graph.coords2id(col,row,MAX_COL)
                         self.graph.add_node(cur_node)
@@ -47,7 +48,10 @@ class State:
                         #Parse goals
                         elif char in "abcdefghijklmnopqrstuvwxyz":
                             self.goals.append((row, col))
-    
+                        #Parse spaces
+                        elif (char ==' '):
+                            #Do nothing after creating the node
+                            pass
                         else:
                             print('Error, read invalid level character: {}'.format(char), file=sys.stderr, flush=True)
                             sys.exit(1)
