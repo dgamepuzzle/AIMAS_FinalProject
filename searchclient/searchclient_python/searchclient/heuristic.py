@@ -11,8 +11,6 @@ class Heuristic(metaclass=ABCMeta):
         self.goalCoords = defaultdict(list)
         self.goalDists = defaultdict(list)
         
-        self.start = True
-        
         # Loop through the goals, and save their coordinates
         if not backwards:
             for i in range(len(State.goals)):
@@ -72,7 +70,7 @@ class Heuristic(metaclass=ABCMeta):
                     
         return boxCoords
     
-    def manhattan(self, state: 'State') -> 'int':
+    def real_dist(self, state: 'State') -> 'int':
         boxCoords = Heuristic.findBoxCoords(state)
         totalDist = 0
         
@@ -94,21 +92,17 @@ class Heuristic(metaclass=ABCMeta):
                 box_goal_d.append(dists_from_this_box)
                 
             for box_dists in box_goal_d:
-                if self.start:
-                    print(box_dists, file=sys.stderr, flush=True)
                 totalDist += min(box_dists)
                 
             for i in range(goal_cnt):
-                totalDist += 0.1 * self.goalDists[goalType][i][state.agent_row][state.agent_col]
-            
-            self.start = False
+                totalDist += 0.01 * self.goalDists[goalType][i][state.agent_row][state.agent_col]
             
             #print("%d %d" % (len(box_goal_d), len(box_goal_d[0])), file=sys.stderr, flush=True)
         return totalDist
         
     
     def h(self, state: 'State') -> 'int':
-        return self.manhattan(state);
+        return self.real_dist(state);
     
     @abstractmethod
     def f(self, state: 'State') -> 'int': pass

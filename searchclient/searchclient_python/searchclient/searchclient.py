@@ -183,18 +183,19 @@ class SearchClient:
             leaf1 = strategy1.get_and_remove_leaf()            
             leaf2 = strategy2.get_and_remove_leaf()
 
-            if strategy1.in_frontier(leaf2):
+            if strategy1.is_explored(leaf2):
                 print("LEAF 2 found in STRATEGY 1", file=sys.stderr, flush=True)
                 
-                leaf_pre = strategy1.frontier[strategy1.frontier.index(leaf2)]
+                leaf_pre = strategy1.get_from_explored(leaf2)
                 first_half = leaf_pre.extract_plan()
                 second_half = leaf2.extract_plan(include_initial=True)
                 
                 second_half.reverse()
 
-                for i in range(1, len(second_half)):
+                for i in range(len(second_half)-1, -1, -1):
                     second_half[i].parent = second_half[i-1]
-                    second_half[i].action = second_half[i].action.get_inverse()
+                    if second_half[i].action is not None:
+                        second_half[i].action = second_half[i].action.get_inverse()
                     
                 solution = first_half + second_half
                 
@@ -205,10 +206,10 @@ class SearchClient:
                 print(second_half[-1].agent_row, second_half[-1].agent_col, file=sys.stderr, flush=True)
                 return solution
             
-            if strategy2.in_frontier(leaf1):
+            if strategy2.is_explored(leaf1):
                 print("LEAF 1 found in STRATEGY 2", file=sys.stderr, flush=True)
 
-                leaf_post = strategy2.frontier[strategy2.frontier.index(leaf1)]
+                leaf_post = strategy2.get_from_explored(leaf1)
                 first_half = leaf1.extract_plan()
                 
                 second_half = leaf_post.extract_plan(include_initial=True)
@@ -267,8 +268,8 @@ def main(strategy_str: 'str'):
         print('Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.', file=sys.stderr, flush=True)
 
     if strategy_str == 'bi':
-        strategy_fwd = StrategyBestFirst(WAStar(client.initial_state, 0.1))
-        strategy_back = StrategyBFS() #StrategyBestFirst(AStar(client.initial_state, backwards=True))
+        strategy_fwd = StrategyBFS() #estFirst(Greedy(client.initial_state))
+        strategy_back = StrategyBFS() #estFirst(Greedy(client.initial_state))
         solution = client.bi_search(strategy_fwd, strategy_back)
     else:
         solution = client.search(strategy)

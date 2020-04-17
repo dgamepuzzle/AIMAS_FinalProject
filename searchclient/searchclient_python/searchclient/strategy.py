@@ -17,6 +17,12 @@ class Strategy(metaclass=ABCMeta):
     def is_explored(self, state: 'State') -> 'bool':
         return state in self.explored
     
+    def get_from_explored(self, state: 'State') -> 'State':
+        for idx, elem in enumerate(self.explored):
+            if elem == state:
+                return elem
+        return None
+    
     def explored_count(self) -> 'int':
         return len(self.explored)
     
