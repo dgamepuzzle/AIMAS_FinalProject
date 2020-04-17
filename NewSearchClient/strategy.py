@@ -23,7 +23,7 @@ class Strategy(metaclass=ABCMeta):
         return perf_counter() - self.start_time
     
     def search_status(self) -> 'str':
-        return '#Explored: {:6}, #Frontier: {:6}, #Generated: {:6}, Time: {:3.2f} s, Alloc: {:4.2f} MB, MaxAlloc: {:4.2f} MB'.format(self.explored_count(), self.frontier_count(), self.explored_count() + self.frontier_count(), self.time_spent(), config.get_usage(), config.max_usage)
+        return '#Explored: {:6}, #Frontier: {:6}, #Generated: {:6}, Time: {:3.2f} s, Alloc: {:4.2f} MB, MaxAlloc: {:4.2f} MB'.format(self.explored_count(), self.frontier_count(), self.explored_count() + self.frontier_count(), self.time_spent(), config.get_memory_usage(), config.max_usage)
     
     @abstractmethod
     def get_and_remove_leaf(self) -> 'State': raise NotImplementedError

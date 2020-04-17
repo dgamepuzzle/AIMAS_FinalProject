@@ -53,7 +53,7 @@ class Plan:
                 return None
             
             leaf = strategy.get_and_remove_leaf()
-            print('get and remove leaf()', file=sys.stderr, flush=True)
+            # print('get and remove leaf()', file=sys.stderr, flush=True)
             
             if leaf.is_goal_state():
                 print('found goal', file=sys.stderr, flush=True)
@@ -63,6 +63,9 @@ class Plan:
             for child_state in leaf.get_children(): # The list of expanded states is shuffled randomly; see state.py.
                 if not strategy.is_explored(child_state) and not strategy.in_frontier(child_state):
                     strategy.add_to_frontier(child_state)
+                    #print(str(child_state), file=sys.stderr, flush=True)
             
             iterations += 1
         pass
+    
+    

@@ -8,20 +8,22 @@ from itertools import product
 
 import itertools
 import sys
+import random
 
 from graph import Graph
 from jointaction import ActionType, ALL_ACTIONS
 from level_elements import Agent, Box, Goal
-from jointaction import ALL_ACTIONS, ActionType, JointAction 
+from jointaction import ALL_ACTIONS, ActionType
 
 class State:
+    _RNG = random.Random(1)
     MAX_ROW = None
     MAX_COL = None
     goals = []
     colors = []
     walls = []
     
-    def __init__(self, copy: 'State', level_lines, goal_state = False):
+    def __init__(self, copy: 'State', level_lines = "", goal_state = False):
         
         if copy ==None:
             self.graph = Graph()
@@ -56,6 +58,8 @@ class State:
                             if char in "0123456789":
                                 color = State.colors[char]
                                 self.agents.append(Agent(char,color,(row, col)))
+                                
+                                print("saving agent at "+ str((row,col)), file=sys.stderr, flush=True)
                             #Parse boxes
                             elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
                                 color = State.colors[char]
@@ -93,7 +97,7 @@ class State:
         Returns a list of child states attained from applying every combination of applicable actions in the current state.
         The order of the actions within the joint action is random.
         '''
-        print('get children', file=sys.stderr, flush=True)
+        #print('get children', file=sys.stderr, flush=True)
         children = []
         joint_actions = []
         num_agents = len(self.agents)
@@ -101,8 +105,9 @@ class State:
         for agent_idx in range(num_agents):
             joint_actions.append(self.agents[agent_idx])
         # Generate permutations with the available actions
-        perms = list(itertools.product(*joint_actions))
+        perms = list(itertools.product(ALL_ACTIONS, repeat= num_agents))
         # Generate a children state for each permutation
+        #print(str(perms), file=sys.stderr, flush=True)
         for perm in perms:
             child = State(self)
             child.jointaction = perm
@@ -137,6 +142,8 @@ class State:
                     box_col = self.agent_col + action.box_dir.way[1]
                     if self.box_at(box_row, box_col):
                         actions.append(action)
+                        
+        
         return actions
     
     def update_positions(self) -> 'bool':
@@ -146,13 +153,12 @@ class State:
             new_agent_col = agent.coords[1] + action.agent_dir.way[1]
             if action.action_type is ActionType.Move:
                 if self.is_free(new_agent_row, new_agent_col):
-                    self.agents[idx].coords[0] = new_agent_row
-                    self.agents[idx].coords[1] = new_agent_col
+                    self.agents[idx].coords = (new_agent_row, new_agent_col)
                 else: return False
             elif action.action_type is ActionType.Push:
                 if self.box_at(new_agent_row, new_agent_col):
-                    new_box_row = new_agent_row + action.box_dir.d_row
-                    new_box_col = new_agent_col + action.box_dir.d_col
+                    new_box_row = new_agent_row + action.box_dir.way[0]
+                    new_box_col = new_agent_col + action.box_dir.way[1]
                     if self.is_free(new_box_row, new_box_col):
                         self.agents[idx].coords[0] = new_agent_row
                         self.agents[idx].coords[1] = new_agent_col
@@ -163,8 +169,8 @@ class State:
                 else: return False
             elif action.action_type is ActionType.Pull:
                 if self.is_free(new_agent_row, new_agent_col):
-                    box_row = agent.coords[0] + action.box_dir.d_row
-                    box_col = agent.coords[1] + action.box_dir.d_col
+                    box_row = agent.coords[0] + action.box_dir.way[0]
+                    box_col = agent.coords[1] + action.box_dir.way[1]
                     if self.box_at(box_row, box_col):
                         self.agents[idx].coords[0] = new_agent_row
                         self.agents[idx].coords[1] = new_agent_col
@@ -173,14 +179,12 @@ class State:
                         #self.boxes[box_row][box_col] = None
                     else: return False
                 else: return False
-        return true
+        return True
     
     def is_initial_state(self) -> 'bool':
         return self.parent is None
     
     def is_goal_state(self) -> 'bool':
-        print(str(State.goals), file=sys.stderr, flush=True)
-        print(str(self.boxes), file=sys.stderr, flush=True)
         for goal in State.goals:
             for box in self.boxes:
                 
@@ -207,3 +211,37 @@ class State:
     def box_at(self, row: 'int', col: 'int') -> 'bool':
         return any(box.coords == (row,col) for box in self.boxes)
 
+    def __repr__(self):
+        lines = []
+        for row in range(State.MAX_ROW):
+            line = []
+            cont=False
+            for col in range(State.MAX_COL):
+                cont=False
+                for box in self.boxes:
+                    #print(str(box.is_at(row,col)), file=sys.stderr, flush=True)
+                    if box.is_at(row,col):  
+                         print("box at" + str((row,col)), file=sys.stderr, flush=True)
+                         line.append(box.letter)
+                         cont = True
+                
+                for goal in self.goals:
+                     if goal.is_at(row,col):  
+                         print("goal at" + str((row,col)), file=sys.stderr, flush=True)
+                         line.append(goal.letter)
+                         cont = True
+                         
+                for agent in self.agents:
+                     if agent.is_at(row,col):
+                         print("agent at" + str((row,col)), file=sys.stderr, flush=True)
+                         line.append(agent.number)
+                         cont = True
+                
+                if cont: continue
+                if self.walls[row][col]: 
+                    line.append('+')
+                else: line.append(' ')
+                
+            print(str(line), file=sys.stderr, flush=True)
+            lines.append(''.join(line))
+        return '\n'.join(lines)
