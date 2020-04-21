@@ -27,7 +27,7 @@ def main(strategy_str: 'str'):
     commands = planner.resolve()
     
     #Send commands to server
-    #send_to_server(commands)
+    #communicator.send_to_server(commands)
     
     '''#Dummy commands
     for i in range (13):

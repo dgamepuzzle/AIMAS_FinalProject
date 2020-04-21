@@ -5,6 +5,7 @@ Created on Sat Apr 11 17:18:04 2020
 @author: AIStars group
 """
 
+import time
 import sys
 from strategy import *
 from state import State
@@ -15,7 +16,9 @@ class Plan:
     def __init__(self, start_state, goal_state, strategy_str):
 
         self.start_state = start_state
-        self.goal_state = goal_state        
+        test = State(start_state)
+        self.goal_state = goal_state     
+        print("Equal???: " + str(start_state == test), file=sys.stderr, flush=True)
 
         #TODO: Process strategy
         if strategy_str == 'bfs':
@@ -63,7 +66,9 @@ class Plan:
             for child_state in leaf.get_children(): # The list of expanded states is shuffled randomly; see state.py.
                 if not strategy.is_explored(child_state) and not strategy.in_frontier(child_state):
                     strategy.add_to_frontier(child_state)
-                    #print(str(child_state), file=sys.stderr, flush=True)
+                    print(str(child_state), file=sys.stderr, flush=True)
+                    print(str(child_state.jointaction), file=sys.stderr, flush=True)
+                    time.sleep(3)
             
             iterations += 1
         pass
