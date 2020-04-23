@@ -1,0 +1,21 @@
+#domain
+hospital
+#levelname
+MAsoko1
+#colors
+red: 0, 1, A, B
+#initial
+++++++
++0A  +
+++++++
+++++++
++1B  +
+++++++
+#goal
+++++++
++   A+
+++++++
+++++++
++   B+
+++++++
+#end
