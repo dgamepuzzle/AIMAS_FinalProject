@@ -206,15 +206,16 @@ class State:
         return self.parent is None
     
     def is_goal_state(self) -> 'bool':
+        
         for goal in State.goals:
+            goal_is_statisfied = False
             for box in self.boxes:
-                
-                if(goal.letter == box.letter.lower() and goal.coords == box.coords):
-                    print(goal.letter +" = "+ box.letter.lower(), file=sys.stderr, flush=True)
-                    print(goal.coords +" = "+  box.coords, file=sys.stderr, flush=True)
+                if(goal.letter == box.letter and goal.coords == box.coords):
+                    print(str(goal.coords) +" = "+  str(box.coords), file=sys.stderr, flush=True)
+                    goal_is_statisfied=True
                     break
             
-            return False    
+            if not goal_is_statisfied: return False   
         return True
 
     def extract_plan(self) -> '[State, ...]':
