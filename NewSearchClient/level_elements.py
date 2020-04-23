@@ -14,6 +14,12 @@ class Agent:
 
     def is_at(self, row, col):
         return (self.coords == (row,col))
+    
+    def __eq__(self, other: 'Agent'):
+        if self.number != other.number: return False
+        if self.color != other.color: return False
+        if self.coords != other.coords: return False
+        return True
 
 class Box:
     def __init__(self, letter: 'str', color: 'str', coords):
@@ -23,6 +29,12 @@ class Box:
 
     def is_at(self, row, col):
         return (self.coords == (row,col))
+    
+    def __eq__(self, other: 'Box'):
+        if self.letter != other.letter: return False
+        if self.color != other.color: return False
+        if self.coords != other.coords: return False
+        return True
 
 class Goal:
     def __init__(self, letter: 'str', coords):
@@ -31,3 +43,9 @@ class Goal:
     
     def is_at(self, row, col):
         return (self.coords == (row,col))
+    
+    def __eq__(self, other: 'Goal'):
+        if self.letter != other.letter: return False
+        if self.coords != other.coords: return False
+        return True
+    
