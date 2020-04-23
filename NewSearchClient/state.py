@@ -67,7 +67,7 @@ class State:
                                 color = State.colors[char]
                                 self.boxes.append(Box(char, color, (row, col)))
                                 if goal_state: #Parse goals
-                                    print("adding goal to array", file=sys.stderr, flush=True)
+                                    print("adding goal at "+ str((row,col)), file=sys.stderr, flush=True)
                                     State.goals.append(Goal(char,(row, col)))
                             #Parse spaces
                             elif (char ==' '):
@@ -264,7 +264,7 @@ class State:
                 for goal in self.goals:
                      if goal.is_at(row,col):  
                          #print("goal at" + str((row,col)), file=sys.stderr, flush=True)
-                         line.append(goal.letter)
+                         line.append(goal.letter.lower())
                          cont = True
                          
                 
@@ -295,7 +295,6 @@ class State:
     
     
     def __eq__(self, other):
-        if self is other: return True
         if not isinstance(other, State): return False
         if self.agents != other.agents: return False
         if self.boxes != other.boxes: return False
