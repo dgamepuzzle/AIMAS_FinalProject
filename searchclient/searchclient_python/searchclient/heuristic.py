@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from state import State
 from collections import defaultdict
+from hungarian import Hungarian
 
 import sys
 
@@ -91,11 +92,17 @@ class Heuristic(metaclass=ABCMeta):
                 
                 box_goal_d.append(dists_from_this_box)
                 
-            for box_dists in box_goal_d:
-                totalDist += min(box_dists)
+            #for box_dists in box_goal_d:
+            #    totalDist += min(box_dists)
                 
-            for i in range(goal_cnt):
-                totalDist += 0.01 * self.goalDists[goalType][i][state.agent_row][state.agent_col]
+            #for i in range(goal_cnt):
+            #    totalDist += 0.01 * self.goalDists[goalType][i][state.agent_row][state.agent_col]
+            
+            #print(box_goal_d, file=sys.stderr, flush=True)
+            
+            hu = Hungarian()
+            hu.solve(box_goal_d)
+            totalDist += hu.get_min_cost()
             
             #print("%d %d" % (len(box_goal_d), len(box_goal_d[0])), file=sys.stderr, flush=True)
         return totalDist

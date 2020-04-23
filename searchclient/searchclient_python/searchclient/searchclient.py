@@ -268,8 +268,8 @@ def main(strategy_str: 'str'):
         print('Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.', file=sys.stderr, flush=True)
 
     if strategy_str == 'bi':
-        strategy_fwd = StrategyBFS() #estFirst(Greedy(client.initial_state))
-        strategy_back = StrategyBFS() #estFirst(Greedy(client.initial_state))
+        strategy_fwd = StrategyBestFirst(AStar(client.initial_state)) #StrategyBFS() #estFirst(Greedy(client.initial_state))
+        strategy_back = StrategyBestFirst(AStar(client.initial_state)) #StrategyBFS() #estFirst(Greedy(client.initial_state))
         solution = client.bi_search(strategy_fwd, strategy_back)
     else:
         solution = client.search(strategy)
