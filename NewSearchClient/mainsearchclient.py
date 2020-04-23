@@ -25,9 +25,11 @@ def main(strategy_str: 'str'):
     
     #Solve the level
     commands = planner.resolve()
+    for command in commands:  
+        print(str(command.jointaction), file=sys.stderr, flush=True)
     
     #Send commands to server
-    #communicator.send_to_server(commands)
+    com.send_commands_to_server(commands)
     
     '''#Dummy commands
     for i in range (13):

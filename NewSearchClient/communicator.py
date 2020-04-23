@@ -106,3 +106,10 @@ class Communicator:
         print("initial state:\n"+ "\n".join(init_state_text), file=sys.stderr, flush=True)
         print("goal state:\n"+ "\n".join(goal_state_text), file=sys.stderr, flush=True)    
          '''
+    def send_commands_to_server(self, commands):
+        for state in commands:
+            msg =''
+            for action in state.jointaction:
+                msg += str(action).replace('[','').replace(']','') + ";"
+            msg = msg[:-1]
+            print(msg, file=sys.stdout, flush=True)    
