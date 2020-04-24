@@ -4,17 +4,15 @@ Created on Sat Apr 11 17:14:20 2020
 
 @author: AIStars group
 """
-import copy as cp
-from itertools import product
 
-import itertools
+import copy as cp
 import sys
 import random
 
 from graph import Graph
-from jointaction import ActionType, ALL_ACTIONS
+from itertools import product
+from jointaction import Action, ActionType, ALL_ACTIONS
 from level_elements import Agent, Box, Goal
-from jointaction import ALL_ACTIONS, ActionType
 
 class State:
     _RNG = random.Random(1)
@@ -107,7 +105,7 @@ class State:
         for agent_idx in range(num_agents):
             joint_actions.append(self.agents[agent_idx])
         # Generate permutations with the available actions
-        perms = list(itertools.product(ALL_ACTIONS, repeat= num_agents))
+        perms = list(product(ALL_ACTIONS, repeat= num_agents))
         #print(str(perms), file=sys.stderr, flush=True)
         # Generate a children state for each permutation
         #print(str(perms), file=sys.stderr, flush=True)
@@ -138,6 +136,7 @@ class State:
     
     def check_agent_possible_actions(self, agent: 'Agent'):
         actions = []
+        actions.append(Action(ActionType.NoOp, None, None))
         for action in ALL_ACTIONS:
             # Determine if action is applicable.
             new_agent_row = agent.coords[0] + action.agent_dir.way[0]
@@ -147,7 +146,7 @@ class State:
                 if self.is_free(new_agent_row, new_agent_col):
                     actions.append(action)
             elif action.action_type is ActionType.Push:
-                if self.box_at(new_agent_row, new_agent_col):
+                if self.box_at(new_agent_row, new_agent_col, agent.color):
                     new_box_row = new_agent_row + action.box_dir.way[0]
                     new_box_col = new_agent_col + action.box_dir.way[1]
                     if self.is_free(new_box_row, new_box_col):
@@ -156,7 +155,7 @@ class State:
                 if self.is_free(new_agent_row, new_agent_col):
                     box_row = self.agent_row + action.box_dir.way[0]
                     box_col = self.agent_col + action.box_dir.way[1]
-                    if self.box_at(box_row, box_col):
+                    if self.box_at(box_row, box_col, agent.color):
                         actions.append(action)
                         
         
@@ -173,7 +172,7 @@ class State:
                     self.agents[idx].coords = (new_agent_row, new_agent_col)
                 else: return False
             elif action.action_type is ActionType.Push:
-                box = self.box_at(new_agent_row, new_agent_col)
+                box = self.box_at(new_agent_row, new_agent_col, agent.color)
                 if box != None:
                     new_box_row = box.coords[0] + action.box_dir.way[0]
                     new_box_col = box.coords[1] + action.box_dir.way[1]
@@ -188,8 +187,7 @@ class State:
                 if self.is_free(new_agent_row, new_agent_col):
                     box_row = agent.coords[0] - action.box_dir.way[0]
                     box_col = agent.coords[1] - action.box_dir.way[1] 
-                    box = self.box_at(box_row, box_col)
-                    
+                    box = self.box_at(box_row, box_col, agent.color)
                     if box != None:
                         new_box_row = box.coords[0] + action.box_dir.way[0]
                         new_box_col = box.coords[1] + action.box_dir.way[1]
@@ -200,6 +198,7 @@ class State:
                         #self.boxes[box_row][box_col] = None
                     else: return False
                 else: return False
+            elif action.action_type is ActionType.NoOp: pass
         return True
     
     def is_initial_state(self) -> 'bool':
@@ -230,11 +229,10 @@ class State:
     def is_free(self, row: 'int', col: 'int') -> 'bool':
         return not State.walls[row][col] and not any(box.coords == (row,col) for box in self.boxes) and not any(agent.coords == (row,col) for agent in self.agents)
     
-    def box_at(self, row: 'int', col: 'int') -> 'Box':
+    def box_at(self, row: 'int', col: 'int', color: 'str') -> 'Box':
         for box in self.boxes:
-            if box.coords == (row,col):
+            if box.coords == (row,col) and box.color == color:
                 return box
-        
         return None
 
     def __repr__(self):

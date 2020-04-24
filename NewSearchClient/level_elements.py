@@ -4,7 +4,6 @@ Created on Wed Apr 15 14:55:58 2020
 
 @author: AIStars group
 """
-import sys
 
 class Agent:
     def __init__(self, number: 'int', color: 'str', coords):
@@ -16,6 +15,7 @@ class Agent:
         return (self.coords == (row,col))
     
     def __eq__(self, other: 'Agent'):
+        if not isinstance(other, Agent): return False
         if self.number != other.number: return False
         if self.color != other.color: return False
         if self.coords != other.coords: return False
@@ -31,6 +31,7 @@ class Box:
         return (self.coords == (row,col))
     
     def __eq__(self, other: 'Box'):
+        if not isinstance(other, Box): return False
         if self.letter != other.letter: return False
         if self.color != other.color: return False
         if self.coords != other.coords: return False
@@ -45,6 +46,7 @@ class Goal:
         return (self.coords == (row,col))
     
     def __eq__(self, other: 'Goal'):
+        if not isinstance(other, Goal): return False
         if self.letter != other.letter: return False
         if self.coords != other.coords: return False
         return True

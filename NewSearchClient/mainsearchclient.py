@@ -30,20 +30,8 @@ def main(strategy_str: 'str'):
     
     #Send commands to server
     com.send_commands_to_server(commands)
-    
-    '''#Dummy commands
-    for i in range (13):
-        print("Move(E)", file=sys.stdout, flush=True)
-        
-    for i in range(2):
-        print("Move(S)", file=sys.stdout, flush=True)
-        
-    for i in range(3):
-        print("Move(E)", file=sys.stdout, flush=True)
-        
-    print("Push(S,S)", file=sys.stdout, flush=True)'''
 
-    #level complete
+    #Level completed!!
 
 if __name__ == '__main__':
     # Program arguments, reads the arguments from the command prompt through the argparse module.

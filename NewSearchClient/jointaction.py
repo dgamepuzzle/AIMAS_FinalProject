@@ -26,18 +26,19 @@ Dir.W = Dir('W', (0, -1))
 
 
 class ActionType:
-    Move = Push = Pull = None
+    Move = Push = Pull = NoOp = None
     
     def __init__(self, name: 'str'):
         '''
         For internal use; do not instantiate.
-        Use ActionType.Move, ActionType.Push, and ActionType.Pull instead.
+        Use ActionType.NoOp, ActionType.Move, ActionType.Push, and ActionType.Pull instead.
         '''
         self.name = name
     
     def __repr__(self):
         return self.name
 
+ActionType.NoOp = ActionType('NoOp')
 ActionType.Move = ActionType('Move')
 ActionType.Push = ActionType('Push')
 ActionType.Pull = ActionType('Pull')
@@ -52,10 +53,13 @@ class Action:
         self.action_type = action_type
         self.agent_dir = agent_dir
         self.box_dir = box_dir
-        if box_dir is not None:
-            self._repr = '[{}({},{})]'.format(action_type, agent_dir, box_dir)
+        if agent_dir is not None:
+            if box_dir is not None:
+                self._repr = '[{}({},{})]'.format(action_type, agent_dir, box_dir)
+            else:
+                self._repr = '[{}({})]'.format(action_type, agent_dir)
         else:
-            self._repr = '[{}({})]'.format(action_type, agent_dir)
+            self._repr = '[{}]'.format(action_type)
     
     def __repr__(self):
         return self._repr
