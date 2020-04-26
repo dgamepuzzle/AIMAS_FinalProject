@@ -45,9 +45,9 @@ class Heuristic(metaclass=ABCMeta):
             for offset in offsets:
                 x = current[0] + offset[0]
                 y = current[1] + offset[1]                
-                if (x < 0) or (x > row_cnt):
+                if (x < 0) or (x >= row_cnt):
                     continue
-                if (y < 0) or (y > col_cnt):
+                if (y < 0) or (y >= col_cnt):
                     continue            
                 if walls[x][y]:
                     continue
