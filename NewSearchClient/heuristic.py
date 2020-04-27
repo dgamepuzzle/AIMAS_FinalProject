@@ -1,13 +1,27 @@
 from abc import ABCMeta, abstractmethod
-
+from collections import defaultdict
+import sys
 
 class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
         # Here's a chance to pre-process the static parts of the level.
-        pass
+        print(initial_state.goals[0].coords, file=sys.stderr, flush=True)
+        print(initial_state.goals[0].letter, file=sys.stderr, flush=True)
+        
+        # Stores arrays of size (MAX_ROW, MAX_COL), denoting minimum push
+        # distances from each goal (might use graphs instead).
+        # The data is grouped by colors, for easier lookup.
+        self.goalDistances = defaultdict(list)
+        
+        for goal in initial_state.goals:
+            self.goalDistances[goal.letter.lower()].append(
+                Heuristic.gridBfs(initial_state.walls, goal.coords)
+            )
+            
     
     def h(self, state: 'State') -> 'int':
         
+        '''
         def manDistFromBoxToGoal():
             h=0
             distanceFromAgentToNearestBox= float('inf');
@@ -48,14 +62,87 @@ class Heuristic(metaclass=ABCMeta):
             return h
         #-----------------------------------------
         
+        
+        
         #Manhatten distance of all boxes to nearest goal
         
-        h= manDistFromBoxToGoal()    
-        #h=manDistFromGoalToBox()            
+        #h= manDistFromBoxToGoal()    
+        #h=manDistFromGoalToBox()
+        '''
+        h = self.real_dist(state)
+        
         return h
     
+    @staticmethod
+    def gridBfs(walls, startCoords):
+        rowCnt = len(walls)
+        colCnt = len(walls[0])
+        gridDistances = [[0 for j in range(colCnt)] for i in range(rowCnt)]
         
+        start = (startCoords[0], startCoords[1], 0)
+        frontier = [start]
+        visited = set()
+        offsets = ((0, 1), (1, 0), (-1, 0), (0, -1))
+        
+        while len(frontier) > 0:
+            current = frontier.pop(0)
+            gridDistances[current[0]][current[1]] = current[2]            
+            for offset in offsets:
+                x = current[0] + offset[0]
+                y = current[1] + offset[1]                
+                if (x < 0) or (x >= rowCnt):
+                    continue
+                if (y < 0) or (y >= colCnt):
+                    continue            
+                if walls[x][y]:
+                    continue
+                candidate = (x, y, current[2]+1)
+                candidateCheck = (x, y)                
+                if candidateCheck not in visited:
+                    frontier.append(candidate)                
+            visited.add((current[0], current[1]))        
+        return gridDistances
     
+    def real_dist(self, state: 'State') -> 'int':
+        boxCoords = defaultdict(list)
+        
+        for box in state.boxes:
+            boxCoords[box.letter.lower()].append(box.coords)
+        
+        totalDist = 0
+        
+        for goalType in self.goalDistances:
+            box_cnt = len(boxCoords[goalType])
+            goal_cnt = len(self.goalDistances[goalType])
+            
+            box_goal_d = []
+            
+            for i in range(box_cnt):
+                box_x = boxCoords[goalType][i][0]
+                box_y = boxCoords[goalType][i][1]
+                
+                dists_from_this_box = [float('inf')] * goal_cnt
+                
+                for j in range(goal_cnt):
+                    dists_from_this_box[j] = self.goalDistances[goalType][j][box_x][box_y]
+                
+                box_goal_d.append(dists_from_this_box)
+             
+            # Greedy estimate...    
+            for box_dists in box_goal_d:
+                totalDist += min(box_dists)                    
+            #for i in range(goal_cnt):
+            #    totalDist += 0.01 * self.goalDists[goalType][i][state.agent_row][state.agent_col]                
+            '''
+            hu = Hungarian()
+            hu.solve(box_goal_d)
+            totalDist += hu.get_min_cost()
+            '''
+            
+        return totalDist
+    
+    
+        
     @abstractmethod
     def f(self, state: 'State') -> 'int': pass
     
