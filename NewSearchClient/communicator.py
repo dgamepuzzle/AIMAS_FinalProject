@@ -107,9 +107,16 @@ class Communicator:
         print("goal state:\n"+ "\n".join(goal_state_text), file=sys.stderr, flush=True)    
          '''
     def send_commands_to_server(self, commands):
+        # Read server messages from stdin.
+        server_messages = sys.stdin
+        print("Sending these commands to server:", file=sys.stderr, flush=True)   
         for state in commands:
             msg =''
             for action in state.jointaction:
                 msg += str(action).replace('[','').replace(']','') + ";"
             msg = msg[:-1]
             print(msg, file=sys.stdout, flush=True)    
+            response = server_messages.readline().rstrip()
+            if 'false' in response:
+                print('Server responsed with "{}" to the action "{}" applied in:\n{}\n'.format(response, msg, state), file=sys.stderr, flush=True)
+                break

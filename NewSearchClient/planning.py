@@ -57,8 +57,8 @@ class Plan:
                 return None
             
             leaf = strategy.get_and_remove_leaf()
-            print(str(leaf), file=sys.stderr, flush=True)
-            print(str(leaf.jointaction), file=sys.stderr, flush=True)
+            #print(str(leaf), file=sys.stderr, flush=True)
+            #print(str(leaf.jointaction), file=sys.stderr, flush=True)
             
             if leaf.is_goal_state():
                 print('found goal', file=sys.stderr, flush=True)

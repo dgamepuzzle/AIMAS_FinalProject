@@ -103,15 +103,16 @@ class State:
         num_agents = len(self.agents)
         # Compute available actiones per each agent
         for agent_idx in range(num_agents):
-            joint_actions.append(self.agents[agent_idx])
+            joint_actions.append(self.check_agent_possible_actions(self.agents[agent_idx]))
         # Generate permutations with the available actions
-        perms = list(product(ALL_ACTIONS, repeat= num_agents))
+        perms = list(product(*joint_actions))
         #print(str(perms), file=sys.stderr, flush=True)
         # Generate a children state for each permutation
         #print(str(perms), file=sys.stderr, flush=True)
         for perm in perms:
             child = State(self)
             child.jointaction = perm
+            #print("perm = "+str(perm), file=sys.stderr, flush=True)
             # Manage conflicts and update the positions of agents and boxes
             '''
             print("equal: "+str(child==self), file=sys.stderr, flush=True)
@@ -136,81 +137,82 @@ class State:
     
     def check_agent_possible_actions(self, agent: 'Agent'):
         actions = []
+        # Adding 'No action' possibility
         actions.append(Action(ActionType.NoOp, None, None))
         for action in ALL_ACTIONS:
-            # Determine if action is applicable.
+            # Determine new coords. for the agent
             new_agent_row = agent.coords[0] + action.agent_dir.way[0]
             new_agent_col = agent.coords[1] + action.agent_dir.way[1]
-            
+            # Check if 'Move' action is possible
             if action.action_type is ActionType.Move:
                 if self.is_free(new_agent_row, new_agent_col):
                     actions.append(action)
+            # Check if 'Push' action is possible
             elif action.action_type is ActionType.Push:
                 if self.box_at(new_agent_row, new_agent_col, agent.color):
                     new_box_row = new_agent_row + action.box_dir.way[0]
                     new_box_col = new_agent_col + action.box_dir.way[1]
                     if self.is_free(new_box_row, new_box_col):
                         actions.append(action)
-            elif action.action_type is ActionType.Pull:
-                if self.is_free(new_agent_row, new_agent_col):
-                    box_row = self.agent_row + action.box_dir.way[0]
-                    box_col = self.agent_col + action.box_dir.way[1]
-                    if self.box_at(box_row, box_col, agent.color):
-                        actions.append(action)
-                        
-        
-        return actions
-    
-    def update_positions(self) -> 'bool':
-        for idx, action in enumerate(self.jointaction):
-            #print(str(action), file=sys.stderr, flush=True)
-            agent = self.agents[idx]
-            new_agent_row = agent.coords[0] + action.agent_dir.way[0]
-            new_agent_col = agent.coords[1] + action.agent_dir.way[1]
-            if action.action_type is ActionType.Move:
-                if self.is_free(new_agent_row, new_agent_col):
-                    self.agents[idx].coords = (new_agent_row, new_agent_col)
-                else: return False
-            elif action.action_type is ActionType.Push:
-                box = self.box_at(new_agent_row, new_agent_col, agent.color)
-                if box != None:
-                    new_box_row = box.coords[0] + action.box_dir.way[0]
-                    new_box_col = box.coords[1] + action.box_dir.way[1]
-                    if self.is_free(new_box_row, new_box_col):
-                        self.agents[idx].coords = (new_agent_row, new_agent_col)
-                        #TODO Fix this, identify the box first
-                        box.coords = (new_box_row, new_box_col)
-                        #self.boxes[idx].coords[1] = new_box_col
-                    else: return False
-                else: return False
+            # Check if 'Pull' action is possible
             elif action.action_type is ActionType.Pull:
                 if self.is_free(new_agent_row, new_agent_col):
                     box_row = agent.coords[0] - action.box_dir.way[0]
                     box_col = agent.coords[1] - action.box_dir.way[1] 
-                    box = self.box_at(box_row, box_col, agent.color)
+                    if self.box_at(box_row, box_col, agent.color):
+                        actions.append(action)     
+        return actions
+    
+    def update_positions(self) -> 'bool':
+        for idx, action in enumerate(self.jointaction):
+            if action.action_type is ActionType.NoOp:
+                pass
+            else:
+                agent = self.agents[idx]
+                new_agent_row = agent.coords[0] + action.agent_dir.way[0]
+                new_agent_col = agent.coords[1] + action.agent_dir.way[1]
+                if action.action_type is ActionType.Move:
+                    if self.is_free(new_agent_row, new_agent_col):
+                        self.agents[idx].coords = (new_agent_row, new_agent_col)
+                    else: return False
+                elif action.action_type is ActionType.Push:
+                    box = self.box_at(new_agent_row, new_agent_col, agent.color)
                     if box != None:
                         new_box_row = box.coords[0] + action.box_dir.way[0]
                         new_box_col = box.coords[1] + action.box_dir.way[1]
-                        self.agents[idx].coords = (new_agent_row, new_agent_col)
-                        #TODO Fix this, identify the box first
-                        box.coords = (new_box_row, new_box_col)
-                        #self.boxes[self.agent_row][self.agent_col] = self.boxes[box_row][box_col]
-                        #self.boxes[box_row][box_col] = None
+                        if self.is_free(new_box_row, new_box_col):
+                            self.agents[idx].coords = (new_agent_row, new_agent_col)
+                            #TODO Fix this, identify the box first
+                            box.coords = (new_box_row, new_box_col)
+                            #self.boxes[idx].coords[1] = new_box_col
+                        else: return False
                     else: return False
-                else: return False
-            elif action.action_type is ActionType.NoOp: pass
+                elif action.action_type is ActionType.Pull:
+                    if self.is_free(new_agent_row, new_agent_col):
+                        box_row = agent.coords[0] - action.box_dir.way[0]
+                        box_col = agent.coords[1] - action.box_dir.way[1] 
+                        box = self.box_at(box_row, box_col, agent.color)
+                        if box != None:
+                            new_box_row = box.coords[0] + action.box_dir.way[0]
+                            new_box_col = box.coords[1] + action.box_dir.way[1]
+                            self.agents[idx].coords = (new_agent_row, new_agent_col)
+                            #TODO Fix this, identify the box first
+                            box.coords = (new_box_row, new_box_col)
+                            #self.boxes[self.agent_row][self.agent_col] = self.boxes[box_row][box_col]
+                            #self.boxes[box_row][box_col] = None
+                        else: return False
+                    else: return False
         return True
     
     def is_initial_state(self) -> 'bool':
         return self.parent is None
     
     def is_goal_state(self) -> 'bool':
-        
         for goal in State.goals:
             goal_is_statisfied = False
             for box in self.boxes:
                 if(goal.letter == box.letter and goal.coords == box.coords):
-                    print(str(goal.coords) +" = "+  str(box.coords), file=sys.stderr, flush=True)
+                    #print(str(goal.coords) +" = "+  str(box.coords), file=sys.stderr, flush=True)
                     goal_is_statisfied=True
                     break
             
@@ -227,6 +229,11 @@ class State:
         return plan
     
     def is_free(self, row: 'int', col: 'int') -> 'bool':
+        '''if row==3 and col==10 and not any(agent.coords == (row,col) for agent in self.agents):
+            print("not State.walls[row][col]="+str(not State.walls[row][col]) \
+              +" not any(box.coords == (row,col) for box in self.boxes)="+str(not any(box.coords == (row,col) for box in self.boxes)) \
+              +" not any(agent.coords == (row,col) for agent in self.agents)="+str(not any(agent.coords == (row,col) for agent in self.agents)), file=sys.stderr, flush=True)
+            print(self, file=sys.stderr, flush=True)'''
         return not State.walls[row][col] and not any(box.coords == (row,col) for box in self.boxes) and not any(agent.coords == (row,col) for agent in self.agents)
     
     def box_at(self, row: 'int', col: 'int', color: 'str') -> 'Box':
