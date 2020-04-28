@@ -3,6 +3,7 @@ import sys
 class Hungarian():
     
     def __init__(self):
+        
         self.c_mat = None
         self.c_mat_orig = None
         self.row_count_orig = None
@@ -10,6 +11,7 @@ class Hungarian():
         self.n = None
     
     def prepare_mat(self, c_mat):
+        
         row_count = len(c_mat)
         col_count = len(c_mat[0])
         self.c_mat_orig = c_mat
@@ -32,6 +34,7 @@ class Hungarian():
         self.n = len(c_mat)
             
     def rc_max(self, row, col):
+        
         vertical = 0
         horizontal = 0
 
@@ -69,6 +72,7 @@ class Hungarian():
     
     @staticmethod
     def print_mat(m):
+        
         n = len(m)
 
         for row in range(n):
@@ -102,6 +106,7 @@ class Hungarian():
 
     @staticmethod
     def get_line_count(m):
+        
         n = len(m)
         
         if n == 1:
@@ -163,6 +168,9 @@ class Hungarian():
         return min_pos
     
     def solve(self, c_mat):
+        # Solves a given assignment problem provided
+        # by c_mat, and populates the instance variables
+        # for further analysis.
         
         self.prepare_mat(c_mat)
         
@@ -202,6 +210,7 @@ class Hungarian():
         return c_mat
     
     def get_min_cost(self):
+        # Returns the distance cost of the minimum cost matching
         
         cost = 0
         
@@ -211,3 +220,16 @@ class Hungarian():
                     cost += self.c_mat_orig[i][j]
                     continue
         return cost
+    
+    def get_assignments(self):
+        # Returns assignments in an array of tuples, where each tuple
+        # corresponds to an assignment in a (row, col, distance) format.
+        
+        assignments = []
+        
+        for i in range(self.row_count_orig):
+            for j in range(self.col_count_orig):
+                if self.c_mat[i][j] == 0:
+                    assignments.append((i, j, self.c_mat_orig[i][j]))
+                    
+        return assignments
