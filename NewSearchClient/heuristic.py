@@ -2,6 +2,8 @@ from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 import sys
 
+from hungarian import Hungarian
+
 class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
         # Here's a chance to pre-process the static parts of the level.
@@ -12,11 +14,15 @@ class Heuristic(metaclass=ABCMeta):
         # distances from each goal (might use graphs instead).
         # The data is grouped by colors, for easier lookup.
         self.goalDistances = defaultdict(list)
+        self.goalCoords = defaultdict(list)
         
         for goal in initial_state.goals:
             self.goalDistances[goal.letter.lower()].append(
                 Heuristic.gridBfs(initial_state.walls, goal.coords)
             )
+            
+        for goal in initial_state.goals:
+            self.goalCoords[goal.letter.lower()].append(goal.coords)
             
     
     def h(self, state: 'State') -> 'int':
@@ -113,31 +119,38 @@ class Heuristic(metaclass=ABCMeta):
         
         for goalType in self.goalDistances:
             box_cnt = len(boxCoords[goalType])
-            goal_cnt = len(self.goalDistances[goalType])
+            goal_cnt = len(self.goalCoords[goalType])
             
             box_goal_d = []
             
-            for i in range(box_cnt):
-                box_x = boxCoords[goalType][i][0]
-                box_y = boxCoords[goalType][i][1]
+            for i in range(goal_cnt):
+                goal_x = self.goalCoords[goalType][i][0]
+                goal_y = self.goalCoords[goalType][i][1]
                 
-                dists_from_this_box = [float('inf')] * goal_cnt
+                dists_from_this_goal = [float('inf')] * box_cnt
                 
-                for j in range(goal_cnt):
-                    dists_from_this_box[j] = self.goalDistances[goalType][j][box_x][box_y]
+                for j in range(box_cnt):
+                    box_x, box_y = boxCoords[goalType][j]
+                    dists_from_this_goal[j] = self.goalDistances[goalType][i][box_x][box_y]
                 
-                box_goal_d.append(dists_from_this_box)
+                box_goal_d.append(dists_from_this_goal)
              
+            '''
             # Greedy estimate...    
-            for box_dists in box_goal_d:
-                totalDist += min(box_dists)                    
+            for goal_dists in box_goal_d:
+                totalDist += min(goal_dists)                    
+                
+            print(box_goal_d, file=sys.stderr, flush=True)
+            print(totalDist, file=sys.stderr, flush=True)
             #for i in range(goal_cnt):
             #    totalDist += 0.01 * self.goalDists[goalType][i][state.agent_row][state.agent_col]                
             '''
+            
             hu = Hungarian()
             hu.solve(box_goal_d)
-            totalDist += hu.get_min_cost()
-            '''
+            test = hu.get_min_cost()
+            totalDist += test
+            print(test, file=sys.stderr, flush=True)
             
         return totalDist
     
