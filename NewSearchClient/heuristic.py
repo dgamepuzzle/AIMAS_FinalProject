@@ -27,57 +27,7 @@ class Heuristic(metaclass=ABCMeta):
     
     def h(self, state: 'State') -> 'int':
         
-        '''
-        def manDistFromBoxToGoal():
-            h=0
-            distanceFromAgentToNearestBox= float('inf');
-            for rowBox in range(state.MAX_ROW):
-                for colBox in range(state.MAX_COL):
-                    box = state.boxes[rowBox][colBox]
-                    if box != None :
-                        #find nearest goal
-                        bestManDist = float('inf')
-                        for rowGoal in range(state.MAX_ROW):
-                            for colGoal in range(state.MAX_COL):
-                                goal = state.goals[rowGoal][colGoal]
-                                if goal!=None and box.lower() == goal :
-                                    newManDist = abs(rowBox-rowGoal) + abs(colBox-colGoal)
-                                    bestManDist = min(bestManDist,newManDist)
-                         
-                        h+=bestManDist
-                        #see if this is the nearest box to player and add heuristic value.           
-                        newDistanceFromAgentToNearestBox= abs(rowBox-state.agent_row) + abs(colBox-state.agent_col)
-                        distanceFromAgentToNearestBox=min(newDistanceFromAgentToNearestBox,distanceFromAgentToNearestBox)
-            return h+distanceFromAgentToNearestBox
-        #-----------------------------------------
-        def manDistFromGoalToBox():
-            h=0
-            for rowGoal in range(state.MAX_ROW):
-                for colGoal in range(state.MAX_COL):
-                    goal = state.goals[rowGoal][colGoal]
-                    if goal != None :
-                        bestManDist = float('inf')
-                        for rowBox in range(state.MAX_ROW):
-                            for colBox in range(state.MAX_COL):
-                                box = state.boxes[rowBox][colBox]
-                                if box!=None and box.lower() == goal :
-                                    newManDist = abs(rowBox-rowGoal) + abs(colBox-colGoal)
-                                    bestManDist = min(bestManDist,newManDist)
-                                    
-                        h+=bestManDist
-            return h
-        #-----------------------------------------
-        
-        
-        
-        #Manhatten distance of all boxes to nearest goal
-        
-        #h= manDistFromBoxToGoal()    
-        #h=manDistFromGoalToBox()
-        '''
-        h = self.real_dist(state)
-        
-        return h
+        return self.real_dist(state)
     
     @staticmethod
     def gridBfs(walls, startCoords):
@@ -108,6 +58,51 @@ class Heuristic(metaclass=ABCMeta):
                     frontier.append(candidate)                
             visited.add((current[0], current[1]))        
         return gridDistances
+    
+    @staticmethod
+    def get_distance_one_to_many(walls, start_coords, end_coords_array):
+        row_cnt = len(walls)
+        col_cnt = len(walls[0])
+    
+        distances = [float('inf') for i in range(len(end_coords_array))]
+        cnt_found = 0
+        
+        start = (start_coords[0], start_coords[1], 0)
+        frontier = [start]
+        visited = set()
+        offsets = ((0, 1), (1, 0), (-1, 0), (0, -1))
+        
+        while len(frontier) > 0:
+            current = frontier.pop(0)
+            
+            if current[0:2] in end_coords_array:
+                end_coord_idx = end_coords_array.index(current[0:2])
+                distances[end_coord_idx] = current[2]
+                cnt_found += 1
+                if cnt_found >= len(end_coords_array):
+                    return distances
+            
+            for offset in offsets:
+                x = current[0] + offset[0]
+                y = current[1] + offset[1]
+                
+                if (x < 0) or (x > row_cnt):
+                    continue
+                if (y < 0) or (y > col_cnt):
+                    continue            
+                if walls[x][y]:
+                    continue
+                    
+                candidate = (x, y, current[2]+1)
+                cand_check = (x, y)
+                
+                if cand_check not in visited:
+                    frontier.append(candidate)
+                
+            visited.add((current[0], current[1]))
+        
+        return distances
+
     
     def real_dist(self, state: 'State') -> 'int':
         boxCoords = defaultdict(list)
@@ -153,8 +148,6 @@ class Heuristic(metaclass=ABCMeta):
             print(test, file=sys.stderr, flush=True)
             
         return totalDist
-    
-    
         
     @abstractmethod
     def f(self, state: 'State') -> 'int': pass
