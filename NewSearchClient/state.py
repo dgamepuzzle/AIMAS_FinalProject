@@ -157,8 +157,8 @@ class State:
             # Check if 'Pull' action is possible
             elif action.action_type is ActionType.Pull:
                 if self.is_free(new_agent_row, new_agent_col):
-                    box_row = agent.coords[0] - action.box_dir.way[0]
-                    box_col = agent.coords[1] - action.box_dir.way[1] 
+                    box_row = agent.coords[0] + action.box_dir.way[0]
+                    box_col = agent.coords[1] + action.box_dir.way[1] 
                     if self.box_at(box_row, box_col, agent.color):
                         actions.append(action)     
         return actions
@@ -182,24 +182,19 @@ class State:
                         new_box_col = box.coords[1] + action.box_dir.way[1]
                         if self.is_free(new_box_row, new_box_col):
                             self.agents[idx].coords = (new_agent_row, new_agent_col)
-                            #TODO Fix this, identify the box first
                             box.coords = (new_box_row, new_box_col)
-                            #self.boxes[idx].coords[1] = new_box_col
                         else: return False
                     else: return False
                 elif action.action_type is ActionType.Pull:
                     if self.is_free(new_agent_row, new_agent_col):
-                        box_row = agent.coords[0] - action.box_dir.way[0]
-                        box_col = agent.coords[1] - action.box_dir.way[1] 
+                        box_row = agent.coords[0] + action.box_dir.way[0]
+                        box_col = agent.coords[1] + action.box_dir.way[1] 
                         box = self.box_at(box_row, box_col, agent.color)
                         if box != None:
-                            new_box_row = box.coords[0] + action.box_dir.way[0]
-                            new_box_col = box.coords[1] + action.box_dir.way[1]
+                            new_box_row = agent.coords[0]
+                            new_box_col = agent.coords[1]
                             self.agents[idx].coords = (new_agent_row, new_agent_col)
-                            #TODO Fix this, identify the box first
                             box.coords = (new_box_row, new_box_col)
-                            #self.boxes[self.agent_row][self.agent_col] = self.boxes[box_row][box_col]
-                            #self.boxes[box_row][box_col] = None
                         else: return False
                     else: return False
         return True

@@ -73,7 +73,7 @@ for agent_dir in (Dir.N, Dir.S, Dir.E, Dir.W):
         if agent_dir.way[0] + box_dir.way[0] != 0 or agent_dir.way[1] + box_dir.way[1] != 0:
             # If not opposite directions.
             ALL_ACTIONS.append(Action(ActionType.Push, agent_dir, box_dir))
-        if agent_dir is not box_dir:
+        if abs(agent_dir.way[0] + box_dir.way[0]) != 2 or abs(agent_dir.way[1] + box_dir.way[1]) != 2:
             # If not same directions.
             ALL_ACTIONS.append(Action(ActionType.Pull, agent_dir, box_dir))
 

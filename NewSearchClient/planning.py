@@ -45,7 +45,7 @@ class Plan:
         
         iterations = 0
         while True:
-            if iterations == 1000:
+            if iterations == 250:
                 print(strategy.search_status(), file=sys.stderr, flush=True)
                 iterations = 0
             

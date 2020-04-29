@@ -118,5 +118,6 @@ class Communicator:
             print(msg, file=sys.stdout, flush=True)    
             response = server_messages.readline().rstrip()
             if 'false' in response:
-                print('Server responsed with "{}" to the action "{}" applied in:\n{}\n'.format(response, msg, state), file=sys.stderr, flush=True)
+                print('Server responsed with "{}" to the action "{}" applied in:\n{}\n'.format(response, msg, state.parent), file=sys.stderr, flush=True)
+                print('Pretending to reach:\n{}\n'.format(state), file=sys.stderr, flush=True)
                 break
