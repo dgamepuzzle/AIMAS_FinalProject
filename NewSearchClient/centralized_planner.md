@@ -20,4 +20,7 @@
 ## Problems:
 
 ### What if there're less agents than boxes to be pushed?
-Each time a box is pushed into a goal, a reallocation should follow. The planner should try to solve only a limited subset of the goals per reallocation.
+- Each time a box is pushed into a goal, a reallocation should follow. The planner should try to solve only a limited subset of the goals per reallocation.
+
+- Once a box is pushed into a goal, it should be excluded from further allocations.
+  - How do we achieve that? We have to keep track of "finished" boxes and goals...
