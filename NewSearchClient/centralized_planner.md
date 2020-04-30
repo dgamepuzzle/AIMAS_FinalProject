@@ -1,4 +1,4 @@
-# Centralized Planner 
+# Centralized Planner Idea
 
 ## Naive approach...
 
