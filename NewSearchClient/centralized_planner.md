@@ -3,8 +3,8 @@
 ## Naive approach...
 
 ### At the beginning:
-1. Allocate a box to each of the goals
-2. Assign an agent to each of the allocated boxes
+1. Allocate a box to each of the goals (that also depends on letter!)
+2. Assign an agent to each of the allocated boxes (that also depends on color!)
 - Result: 
   - A list of box-goal allocations
   - A list of agent-box allocations
