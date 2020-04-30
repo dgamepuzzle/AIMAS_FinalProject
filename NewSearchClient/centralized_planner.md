@@ -9,6 +9,8 @@
   - A list of box-goal allocations
   - A list of agent-box allocations
 
+... These can be stored as class-level variables in the Heuristic class.
+
 ### At each heuristic calculation:
 1. Recall result of the above operation
 2. Calculate sum of box-goal distances from the box-goal allocation list
