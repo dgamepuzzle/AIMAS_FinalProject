@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+
 from state import State
 
 
@@ -13,34 +14,21 @@ class Heuristic(metaclass=ABCMeta):
             h=0
             distanceFromAgentToNearestBox = float('inf');
             for box in state.boxes:
-                #find nearest goal
+                # Find nearest goal
                 bestManDist = float('inf')
                 for goal in state.goals:
                     if box.letter == goal.letter:
                         newManDist = abs(box.coords[0]-goal.coords[0]) + abs(box.coords[1]-goal.coords[1])
                         bestManDist = min(bestManDist,newManDist)
                 h+=bestManDist
-                #see if this is the nearest box to player and add heuristic value
+                #TODO: Review this, because probably we can get a better implementation
                 for agent in state.agents:
                     newDistanceFromAgentToNearestBox = abs(box.coords[0]-agent.coords[0]) + abs(box.coords[1]-agent.coords[1])
                     distanceFromAgentToNearestBox = min(newDistanceFromAgentToNearestBox,distanceFromAgentToNearestBox)
             return h+distanceFromAgentToNearestBox
-        #-----------------------------------------
-        def manDistFromGoalToBox():
-            h=0
-            for goal in state.goals:
-                bestManDist = float('inf')
-                for box in state.boxes:
-                    if box.letter == goal.letter:
-                        newManDist = abs(box.coords[0]-goal.coords[0]) + abs(box.coords[1]-goal.coords[1])
-                        bestManDist = min(bestManDist,newManDist)
-                h+=bestManDist
-            return h
-        #-----------------------------------------
         
-        #Manhatten distance of all boxes to nearest goal
+        # Manhattan distance of all boxes to nearest goal, taking into account only the closer agent for each box
         h= manDistFromBoxToGoal()    
-        #h=manDistFromGoalToBox()            
         return h
     
     @abstractmethod
@@ -82,4 +70,20 @@ class Greedy(Heuristic):
     
     def __repr__(self):
         return 'Greedy evaluation'
+
+
+'''
+#-----------------------------------------
+def manDistFromGoalToBox():
+    h=0
+    for goal in state.goals:
+        bestManDist = float('inf')
+        for box in state.boxes:
+            if box.letter == goal.letter:
+                newManDist = abs(box.coords[0]-goal.coords[0]) + abs(box.coords[1]-goal.coords[1])
+                bestManDist = min(bestManDist,newManDist)
+        h+=bestManDist
+    return h
+#-----------------------------------------
+'''
 

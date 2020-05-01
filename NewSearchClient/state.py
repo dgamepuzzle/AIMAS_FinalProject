@@ -6,11 +6,11 @@ Created on Sat Apr 11 17:14:20 2020
 """
 
 import copy as cp
-import sys
 import random
+import sys
+from itertools import product
 
 from graph import Graph
-from itertools import product
 from jointaction import Action, ActionType, ALL_ACTIONS
 from level_elements import Agent, Box, Goal
 
@@ -23,25 +23,25 @@ class State:
     walls = []
     
     def __init__(self, copy: 'State' = None, level_lines = "", goal_state = False):
-        
         self._hash = None
-        if copy ==None:
+        if copy == None:
             self.graph = Graph()
             self.agents = []
             self.boxes = []
             self.parent = None
             self.jointaction = []
-
             self.g = 0
             self.h = -1
-            
             State.walls = [[False for _ in range(State.MAX_COL)] for _ in range(State.MAX_ROW)]
             
-            #Parse full level (build graph and save mobile entities)
+            # Parse full level (build static graph and save static/non-static entities).
             try:
                 for row, line in enumerate(level_lines):
                     for col, char in enumerate(line):
+                        
                         if char != '+':
+                            
+                            # First, as it's not a wall, add node to the static graph.
                             cur_node = self.graph.coords2id(col,row,State.MAX_COL)
                             self.graph.add_node(cur_node)
                             for coord in [(-1,0),(1,0),(0,1),(0,-1)]:
@@ -54,36 +54,40 @@ class State:
                                     self.graph.add_node(dest_node)
                                     self.graph.add_edge(cur_node, dest_node, 1) # default distance = 1
                                     #print(str(cur_node) + " ->" + str(dest_node), file=sys.stderr, flush=True)
-                            #Parse agents
+                            
+                            # Parse agents.
                             if char in "0123456789":
                                 color = State.colors[char]
                                 self.agents.append(Agent(char,color,(row, col)))
+                                #print("Saving agent at "+ str((row,col)), file=sys.stderr, flush=True)
                                 
-                                print("saving agent at "+ str((row,col)), file=sys.stderr, flush=True)
-                            #Parse boxes
+                            # Parse boxes.
                             elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
                                 color = State.colors[char]
                                 self.boxes.append(Box(char, color, (row, col)))
                                 if goal_state: #Parse goals
-                                    print("adding goal at "+ str((row,col)), file=sys.stderr, flush=True)
                                     State.goals.append(Goal(char,(row, col)))
-                            #Parse spaces
+                                    #print("adding goal at "+ str((row,col)), file=sys.stderr, flush=True)
+                            
+                            # Parse spaces.
                             elif (char ==' '):
-                                #Do nothing after creating the node
+                                # Do nothing after creating the node.
                                 pass
+                            
                             else:
                                 print('Error, read invalid level character: {}'.format(char), file=sys.stderr, flush=True)
                                 sys.exit(1)
+                        
                         else:
-                            # Walls are not being processed
+                            # Save wall position.
                             State.walls[row][col] = True
                             pass
                 
             except Exception as ex:
                 print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
                 sys.exit(1)
-            
-            #print("These are my colors: "+str(self.colors))
+        
+        # Generate a state with info. from parent.
         else:
             self.graph = copy.graph
             self.agents = cp.deepcopy(copy.agents)
@@ -93,49 +97,40 @@ class State:
             
             self.g = copy.g
             self.h = copy.h
+            
 
     def get_children(self) -> '[State, ...]':
         '''
         Returns a list of child states attained from applying every combination of applicable actions in the current state.
         The order of the actions within the joint action is random.
         '''
-        #print('get children', file=sys.stderr, flush=True)
         children = []
         joint_actions = []
         num_agents = len(self.agents)
-        # Compute available actiones per each agent
+        
+        # Compute available actions per each agent.
         for agent_idx in range(num_agents):
             joint_actions.append(self.check_agent_possible_actions(self.agents[agent_idx]))
-        # Generate permutations with the available actions
+            
+        # Generate permutations with the available actions.
         perms = list(product(*joint_actions))
         #print(str(perms), file=sys.stderr, flush=True)
-        # Generate a children state for each permutation
-        #print(str(perms), file=sys.stderr, flush=True)
+        
+        # Generate a children state for each permutation.
         for perm in perms:
             child = State(self)
             child.jointaction = perm
-            #print("perm = "+str(perm), file=sys.stderr, flush=True)
-            # Manage conflicts and update the positions of agents and boxes
-            '''
-            print("equal: "+str(child==self), file=sys.stderr, flush=True)
-            print("this state pos: "+str(self.agents[0].coords), file=sys.stderr, flush=True)
-            child.agents[0].coords = (99,99)
-            print("this state pos after: "+str(self.agents[0].coords), file=sys.stderr, flush=True)
-            print("child after: "+str(child.agents[0].coords), file=sys.stderr, flush=True)
-            print(str(m), file=sys.stderr, flush=True)
-            '''
             
+            # Manage conflicts and update the positions of agents and boxes.
             if child.update_positions():
-                #print("True", file=sys.stderr, flush=True)
                 child.parent = self
                 child.g += 1
                 children.append(child)
-                
-                #print(str(self.jointaction), file=sys.stderr, flush=True)
-                #print(str(self), file=sys.stderr, flush=True)
         
+        # Sort children states randomly.
         State._RNG.shuffle(children)
         return children
+    
     
     def check_agent_possible_actions(self, agent: 'Agent'):
         actions = []
@@ -164,6 +159,7 @@ class State:
                     if self.box_at(box_row, box_col, agent.color):
                         actions.append(action)     
         return actions
+    
     
     def update_positions(self) -> 'bool':
         for idx, action in enumerate(self.jointaction):
