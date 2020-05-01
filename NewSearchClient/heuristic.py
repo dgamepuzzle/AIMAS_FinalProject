@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from state import State
 
 
 class Heuristic(metaclass=ABCMeta):
@@ -10,51 +11,37 @@ class Heuristic(metaclass=ABCMeta):
         
         def manDistFromBoxToGoal():
             h=0
-            distanceFromAgentToNearestBox= float('inf');
-            for rowBox in range(state.MAX_ROW):
-                for colBox in range(state.MAX_COL):
-                    box = state.boxes[rowBox][colBox]
-                    if box != None :
-                        #find nearest goal
-                        bestManDist = float('inf')
-                        for rowGoal in range(state.MAX_ROW):
-                            for colGoal in range(state.MAX_COL):
-                                goal = state.goals[rowGoal][colGoal]
-                                if goal!=None and box.lower() == goal :
-                                    newManDist = abs(rowBox-rowGoal) + abs(colBox-colGoal)
-                                    bestManDist = min(bestManDist,newManDist)
-                         
-                        h+=bestManDist
-                        #see if this is the nearest box to player and add heuristic value.           
-                        newDistanceFromAgentToNearestBox= abs(rowBox-state.agent_row) + abs(colBox-state.agent_col)
-                        distanceFromAgentToNearestBox=min(newDistanceFromAgentToNearestBox,distanceFromAgentToNearestBox)
+            distanceFromAgentToNearestBox = float('inf');
+            for box in state.boxes:
+                #find nearest goal
+                bestManDist = float('inf')
+                for goal in state.goals:
+                    if box.letter == goal.letter:
+                        newManDist = abs(box.coords[0]-goal.coords[0]) + abs(box.coords[1]-goal.coords[1])
+                        bestManDist = min(bestManDist,newManDist)
+                h+=bestManDist
+                #see if this is the nearest box to player and add heuristic value
+                for agent in state.agents:
+                    newDistanceFromAgentToNearestBox = abs(box.coords[0]-agent.coords[0]) + abs(box.coords[1]-agent.coords[1])
+                    distanceFromAgentToNearestBox = min(newDistanceFromAgentToNearestBox,distanceFromAgentToNearestBox)
             return h+distanceFromAgentToNearestBox
         #-----------------------------------------
         def manDistFromGoalToBox():
             h=0
-            for rowGoal in range(state.MAX_ROW):
-                for colGoal in range(state.MAX_COL):
-                    goal = state.goals[rowGoal][colGoal]
-                    if goal != None :
-                        bestManDist = float('inf')
-                        for rowBox in range(state.MAX_ROW):
-                            for colBox in range(state.MAX_COL):
-                                box = state.boxes[rowBox][colBox]
-                                if box!=None and box.lower() == goal :
-                                    newManDist = abs(rowBox-rowGoal) + abs(colBox-colGoal)
-                                    bestManDist = min(bestManDist,newManDist)
-                                    
-                        h+=bestManDist
+            for goal in state.goals:
+                bestManDist = float('inf')
+                for box in state.boxes:
+                    if box.letter == goal.letter:
+                        newManDist = abs(box.coords[0]-goal.coords[0]) + abs(box.coords[1]-goal.coords[1])
+                        bestManDist = min(bestManDist,newManDist)
+                h+=bestManDist
             return h
         #-----------------------------------------
         
         #Manhatten distance of all boxes to nearest goal
-        
         h= manDistFromBoxToGoal()    
         #h=manDistFromGoalToBox()            
         return h
-    
-        
     
     @abstractmethod
     def f(self, state: 'State') -> 'int': pass

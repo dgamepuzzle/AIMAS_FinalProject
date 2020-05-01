@@ -82,6 +82,8 @@ class State:
             except Exception as ex:
                 print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
                 sys.exit(1)
+            
+            #print("These are my colors: "+str(self.colors))
         else:
             self.graph = copy.graph
             self.agents = cp.deepcopy(copy.agents)

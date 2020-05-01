@@ -4,6 +4,8 @@ from time import perf_counter
 
 import configuration as config
 
+from heuristic import Heuristic
+from state import State
 
 class Strategy(metaclass=ABCMeta):
     def __init__(self):
@@ -148,7 +150,6 @@ class PriorityQueue(object):
     # for inserting an element in the queue 
     def insertInOrder(self, data): 
         data.h = self.heuristic.f(data)
-        
         try: 
             if len(self.queue) == [] :
                 self.queue.append(data)
@@ -163,8 +164,6 @@ class PriorityQueue(object):
         except IndexError: 
             print() 
             exit() 
-        
-        #self.queue.append(data)
   
     # for popping an element based on Priority 
     def delete(self): 
