@@ -1,10 +1,10 @@
-# Centralized Planner 
+# Centralized Planner Idea
 
 ## Naive approach...
 
 ### At the beginning:
-1. Allocate a box to each of the goals
-2. Assign an agent to each of the allocated boxes
+1. Allocate a box to each of the goals (that also depends on letter!)
+2. Assign an agent to each of the allocated boxes (that also depends on color!)
 - Result: 
   - A list of box-goal allocations
   - A list of agent-box allocations
@@ -20,4 +20,7 @@
 ## Problems:
 
 ### What if there're less agents than boxes to be pushed?
-Each time a box is pushed into a goal, a reallocation should follow. The planner should try to solve only a limited subset of the goals per reallocation.
+- Each time a box is pushed into a goal, a reallocation should follow. The planner should try to solve only a limited subset of the goals per reallocation.
+
+- Once a box is pushed into a goal, it should be excluded from further allocations.
+  - How do we achieve that? We have to keep track of "finished" boxes and goals...
