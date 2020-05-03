@@ -8,19 +8,38 @@ from hungarian import Hungarian
 class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
         # Here's a chance to pre-process the static parts of the level.
-        print(initial_state.goals[0].coords, file=sys.stderr, flush=True)
-        print(initial_state.goals[0].letter, file=sys.stderr, flush=True)
         
         # Stores arrays of size (MAX_ROW, MAX_COL), denoting minimum push
         # distances from each goal (might use graphs instead).
-        # The data is grouped by colors, for easier lookup.
+        # The data is grouped by letters in the following way:
+        # goalDistances - "A" : [[distances from goal 1] , [distances from goal 2]]
+        #               - "B" : [[distances from goal 3]]
+        #               - "C" : [[distances from goal 4]] etc...
         self.goalDistances = defaultdict(list)
+        
+        # Stores corresponding goal coordinates.
+        # goalCoords - "A" : [(coords of goal 1), (coords of goal2)]
+        #            - "B" : [(coords of goal 3)]
+        #            - "C" : [(coords of goal 4)] etc...
         self.goalCoords = defaultdict(list)
+        
+        # Stores corresponding goal Ids in the same fashion as the
+        # above defaultdicts.
         self.goalIds = defaultdict(list)
+        
+        # Stores pairs of goal and box ids that have been assigned
+        # in the same fashion as the above defaultdicts.
         self.goalBoxAssignments = defaultdict(list)
+        
+        # Stores pairs of goal and box ids that have been assigned
+        # grouped by COLOR instead of letter
         self.agentBoxAssignments = defaultdict(list)
+        
+        # Keeps track of boxes that have been pushed to their goals
+        # UNUESED FOR NOW - FEATURE TO BE IMPLEMENTED
         self.boxesIdsInGoal = set()
         
+        # Populate the above containers
         for goal in initial_state.goals:
             print(goal.id, file=sys.stderr, flush=True)
             self.goalDistances[goal.letter.lower()].append(
@@ -28,19 +47,31 @@ class Heuristic(metaclass=ABCMeta):
             )
             self.goalCoords[goal.letter.lower()].append(goal.coords)
             self.goalIds[goal.letter.lower()].append(goal.id)
-            
+        
+        # Assign boxes to goals, and agents to those boxes
         self.resetAssignments(initial_state)
-        print('G_B_ASS', file=sys.stderr, flush=True)
-        print(self.goalBoxAssignments, file=sys.stderr, flush=True)
-        print('A_B_ASS', file=sys.stderr, flush=True)
-        print(self.agentBoxAssignments, file=sys.stderr, flush=True)
     
     def h(self, state: 'State') -> 'int':
         
+        # Return the lowest possible step-distance based on assignments
         return self.real_dist(state)
     
     @staticmethod
     def gridBfs(walls, startCoords):
+        
+        # TODO: USE THE GRAPH REPRESENTATION OF THE LEVEL INSTEAD
+        # A simple BFS that traverses the level defined by the 2d walls array
+        # and outputs a 2d array of the same size, filled with distances from
+        # a given point. Useful for precomputing distances from the goals
+        #
+        #   Input wall array                  Resulting array
+        #
+        #   wall     wall    start            0  0  0 (start)
+        #   notwall  notwall notwall          3  2  1
+        #   notwall  wall    notwall  ---->   4  0  2
+        #   notwall  wall    notwall          5  0  3
+        #
+        
         rowCnt = len(walls)
         colCnt = len(walls[0])
         gridDistances = [[0 for j in range(colCnt)] for i in range(rowCnt)]
@@ -71,6 +102,11 @@ class Heuristic(metaclass=ABCMeta):
     
     @staticmethod
     def get_distance(walls, start_coords, end_coords):
+
+        # TODO: USE THE GRAPH REPRESENTATION OF THE LEVEL INSTEAD
+        # Calculate distance between start_coords and end_coords with
+        # a simple BFS. 
+        
         row_cnt = len(walls)
         col_cnt = len(walls[0])
         
@@ -108,6 +144,16 @@ class Heuristic(metaclass=ABCMeta):
     
     @staticmethod
     def get_distance_one_to_many(walls, start_coords, end_coords_array):
+        
+        # TODO: USE THE GRAPH REPRESENTATION OF THE LEVEL INSTEAD
+        # Calculates distances between the_coords of one start point and 
+        # many end points in a single graph traversal. Much more efficient than
+        # running BFS for each of the end points.
+        #
+        # Returns an array representing the distances from the start point to
+        # each of the end points, in a corresponding order as in the 
+        # end_coords_array.
+        
         row_cnt = len(walls)
         col_cnt = len(walls[0])
     
@@ -152,9 +198,18 @@ class Heuristic(metaclass=ABCMeta):
     
     def resetAssignments(self, state: 'State'):
         
+        # TO DO: HANDLE CASE WHEN THERE ARE LESS AGENTS THAN BOXES TO BE PUSHED
+        # Allocates one distinct box to each of the goal and
+        # allocates these boxes to distinct agents.
+        
+        # Reset the variables containing the assignments
         self.goalBoxAssignments = defaultdict(list)
         self.boxAgentAssignments = defaultdict(list)
         
+        # BOX - GOAL ASSIGNMENT SECTION
+        
+        # Create containers for box IDs and box coords, in a similar way as we
+        # did with goals in the __init__ method
         boxIds = defaultdict(list)
         boxCoords= defaultdict(list)
         
@@ -162,89 +217,152 @@ class Heuristic(metaclass=ABCMeta):
             boxIds[box.letter.lower()].append(box.id)
             boxCoords[box.letter.lower()].append(box.coords) 
         
-        for goalType in self.goalDistances:
-            boxCoordss = boxCoords[goalType]
-            goalDists = self.goalDistances[goalType]
+        # DO IT FOR EACH GOAL/BOX LETTER
+        for letter in self.goalDistances:
             
-            box_cnt = len(boxCoordss)
-            goal_cnt = len(goalDists)
+            # Create shorthands for readable code (they're just references,
+            # without extra memory consumption)
+            boxCoordsLetter = boxCoords[letter]
+            goalDistsLetter = self.goalDistances[letter]
             
-            distMatrix = [[goalDists[i][boxCoordss[j][0]][boxCoordss[j][1]] for j in range(box_cnt)] for i in range(goal_cnt)]
+            box_cnt = len(boxCoordsLetter)
+            goal_cnt = len(goalDistsLetter)
             
-            # dist matrix:
+            # Create distance matrix containing distances
+            # between boxes and goals in the following way:
+            #
             #         box1 box2 box3
             # goal1    1    5    3
             # goal2    8    7    5
             # goal3    2    10   7
             
+            distMatrix = [[goalDistsLetter[i][boxCoordsLetter[j][0]][boxCoordsLetter[j][1]] for j in range(box_cnt)] for i in range(goal_cnt)]
+            
+            # Assign a box to each of the goals with the Hungarian algorithm
             h = Hungarian()
             h.solve(distMatrix)
-            assignments = h.get_assignments()
-            idAssignments = [(self.goalIds[goalType][assignment[0]], boxIds[goalType][assignment[0]]) for assignment in assignments]
-            self.goalBoxAssignments[goalType] = idAssignments
             
+            # Get assignments in a 
+            # [(goalX, boxY), (goalY, boxZ), (goalZ, boxX)] format
+            # where goalX..Z and box..Z refers to their corresponding row/col
+            # numbers in the DISTANCE MATRIX
+            assignments = h.get_assignments()
+            
+            # Get the real IDs of the assigned goals and boxes
+            idAssignments = [(self.goalIds[letter][assignment[0]], boxIds[letter][assignment[0]]) for assignment in assignments]
+            
+            # Write the result as the assignment of boxes and goals of letter "letter".
+            self.goalBoxAssignments[letter] = idAssignments
+            
+        
+        # AGENT - BOX ASSIGNMENT SECTION
+        
+        # Create containers for box and agent data, in a similar fashion as in
+        # the above step, this time grouped by COLOR.
         boxIds = defaultdict(list)
         boxCoords= defaultdict(list)
         agentIds = defaultdict(list)
         agentCoords = defaultdict(list)
+
+        # Work with boxes only if they have a corresponding goal
+        # otherwise there's no point in pushing them with agents
         
+        # Create a container of assigned box ids, for easier lookup
         assignedBoxIds = defaultdict(list)
-        for goalType in self.goalBoxAssignments:
-            assignedBoxIds[goalType] = [ass[1] for ass in self.goalBoxAssignments[goalType]]
+        for letter in self.goalBoxAssignments:
+            assignedBoxIds[letter] = [assignment[1] for assignment in self.goalBoxAssignments[letter]]
         
+        # If a box is not assigned to a goal, discard it
+        # Group box data by color
         for box in state.boxes:
-            
             if box.id not in assignedBoxIds[box.letter.lower()]:
                 continue
-            print(box.id, file=sys.stderr, flush=True)
             boxIds[box.color].append(box.id)
             boxCoords[box.color].append(box.coords)
-            
+        
+        # Group agent data by color
         for agent in state.agents:
             agentIds[agent.color].append(agent.id)
             agentCoords[agent.color].append(agent.coords)
     
-        for agentColor in agentCoords:
-            boxCoordss = boxCoords[agentColor]
-            agentCoordss = agentCoords[agentColor]
+        # DO IT FOR EACH AGENT/BOX COLOR ...
+        for color in agentCoords:
+            # Create shorthands for readable code (they're just references,
+            # without extra memory consumption)
+            boxCoordsColor = boxCoords[color]
+            agentCoordsColor = agentCoords[color]
             
-            box_cnt = len(boxCoords)
+            box_cnt = len(boxCoordsColor)
             
-            distMatrix = [Heuristic.get_distance_one_to_many(State.walls, agentCoord, boxCoordss) for agentCoord in agentCoordss]
+            # Create distance matrix for Hungarian algorithm
+            #         box1 box2 box3
+            # agent1    1    5    3
+            # agent2    8    7    5
+            # agent3    2    10   7
+            distMatrix = [Heuristic.get_distance_one_to_many(State.walls, agentCoord, boxCoordsColor) for agentCoord in agentCoordsColor]
             
             h = Hungarian()
             h.solve(distMatrix)
+            
+            # Get assignments in a 
+            # [(agentX, boxY), (agentY, boxZ), (agentZ, boxX)] format
+            # where agentX..Z and box..Z refers to their corresponding row/col
+            # numbers in the DISTANCE MATRIX
             assignments = h.get_assignments()
-            idAssignments = [(agentIds[agentColor][assignment[0]], boxIds[agentColor][assignment[1]]) for assignment in assignments]
-            self.agentBoxAssignments[agentColor] = idAssignments
+            
+            # Get the real IDs of the assigned agents and boxes
+            idAssignments = [(agentIds[color][assignment[0]], boxIds[color][assignment[1]]) for assignment in assignments]
+            
+            # Write the result as the assignment of agents and boxes of this color
+            self.agentBoxAssignments[color] = idAssignments
         
 
-    
     def real_dist(self, state: 'State') -> 'int':
         
-        #self.resetAssignments(state)
+        # TO DO: Check if any new box has been pushed to the goal, then
+        # reallocate.
+        # self.resetAssignments(state)
         
+        # A weight denoting the importance of box-goal distances over agent-box
+        # distances,
         goalBoxMultiplier = 2
         
+        # The total distance
         totalDist = 0
         
-        for goalType in self.goalBoxAssignments:
+        # For each letter...
+        for letter in self.goalBoxAssignments:
+            goalBoxAss = self.goalBoxAssignments[letter]
+            goalDists = self.goalDistances[letter]
 
-            goalBoxAss = self.goalBoxAssignments[goalType]
-            goalDists = self.goalDistances[goalType]
-
+            # Get every GOAL-BOX assignment
             for i in range(len(goalBoxAss)):
                 
-                current_box_coords = next(box for box in state.boxes if box.id == goalBoxAss[i][1]).coords
-                totalDist += (goalDists[i][current_box_coords[0]][current_box_coords[1]] * goalBoxMultiplier)
+                # Get the coordinates of the box in the assignment, and
+                # look up its distance from its corresponding goal
+                boxCoordsCurrent = next(box for box in state.boxes if box.id == goalBoxAss[i][1]).coords
+                
+                # Add it to the total distance
+                totalDist += (goalDists[i][boxCoordsCurrent[0]][boxCoordsCurrent[1]] * goalBoxMultiplier)
             
-        for agentColor in self.agentBoxAssignments:
+        # For each color...
+        for color in self.agentBoxAssignments:
             
-            for assignment in self.agentBoxAssignments[agentColor]:
-                currentAgentCoords = next(agent for agent in state.agents if agent.id == assignment[0]).coords
-                currentBoxCoords = next(box for box in state.boxes if box.id == assignment[1]).coords
-                totalDist += Heuristic.get_distance(State.walls, currentAgentCoords, currentBoxCoords)
+            # For each AGENT-BOX assignment...
+            for assignment in self.agentBoxAssignments[color]:
+                # Look up the corresponding coordinates for the agent ID in the
+                # AGENT-BOX assignment
+                agentCoordsCurrent = next(agent for agent in state.agents if agent.id == assignment[0]).coords
+                
+                # Look up the corresponding coordinates for the box ID in the
+                # AGENT-BOX assignment
+                boxCoordsCurrent = next(box for box in state.boxes if box.id == assignment[1]).coords
+                
+                # Calculate distance between agent and box, and add it to the
+                # total distance
+                totalDist += Heuristic.get_distance(State.walls, agentCoordsCurrent, boxCoordsCurrent)
             
+        # Done.                         ...Done?
         return totalDist
         
     @abstractmethod
