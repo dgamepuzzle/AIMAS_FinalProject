@@ -7,14 +7,10 @@ Created on Wed Apr 15 14:55:58 2020
 
 class Agent:
     
-    autoIncrement = 0
-    
     def __init__(self, number: 'int', color: 'str', coords):
         self.number = number
         self.color = color
         self.coords = coords
-        self.id = Agent.autoIncrement
-        Agent.autoIncrement += 1
 
     def is_at(self, row, col):
         return (self.coords == (row,col))

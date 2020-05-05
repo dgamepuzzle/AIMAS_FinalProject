@@ -282,7 +282,7 @@ class Heuristic(metaclass=ABCMeta):
         
         # Group agent data by color
         for agent in state.agents:
-            agentIds[agent.color].append(agent.id)
+            agentIds[agent.color].append(agent.number)
             agentCoords[agent.color].append(agent.coords)
     
         # DO IT FOR EACH AGENT/BOX COLOR ...
@@ -352,7 +352,7 @@ class Heuristic(metaclass=ABCMeta):
             for assignment in self.agentBoxAssignments[color]:
                 # Look up the corresponding coordinates for the agent ID in the
                 # AGENT-BOX assignment
-                agentCoordsCurrent = next(agent for agent in state.agents if agent.id == assignment[0]).coords
+                agentCoordsCurrent = next(agent for agent in state.agents if agent.number == assignment[0]).coords
                 
                 # Look up the corresponding coordinates for the box ID in the
                 # AGENT-BOX assignment
