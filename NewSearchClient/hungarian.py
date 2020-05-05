@@ -1,235 +1,266 @@
-import sys
+# Written by Timon Knigge, 2014, licensed by the MIT License
 
-class Hungarian():
-    
-    def __init__(self):
-        
-        self.c_mat = None
-        self.c_mat_orig = None
-        self.row_count_orig = None
-        self.col_count_orig = None
-        self.n = None
-    
-    def prepare_mat(self, c_mat):
-        
-        row_count = len(c_mat)
-        col_count = len(c_mat[0])
-        self.c_mat_orig = c_mat
-        self.row_count_orig = row_count
-        self.col_count_orig = col_count
-        
-        
-        c_mat = [[c_mat[i][j] for j in range(col_count)] for i in range(row_count)]
-            
-        diff = row_count - col_count
-            
-        if diff > 0:
-            for i in range(row_count):
-                c_mat[i] += [0 for j in range(diff)]
-        elif diff < 0:
-            new_cols = [[0 for i in range(col_count)] for j in range(-diff)]
-            c_mat += new_cols
-            
-        self.c_mat = c_mat
-        self.n = len(c_mat)
-            
-    def rc_max(self, row, col):
-        
-        vertical = 0
-        horizontal = 0
+import copy
+SIMPLE, STARRED, PRIMED = 0, 1, 2
 
-        for i in range(self.n):
-            if (self.c_mat[row][i] == 0):
-                horizontal += 1
+def hungarian(c_mat):
+    row_count = len(c_mat)
+    col_count = len(c_mat[0])
 
-        for i in range(self.n):
-            if (self.c_mat[i][col] == 0):
-                vertical += 1
+    return [elem for elem in minimize(prepare_mat(c_mat)) if elem[0] < row_count and elem[1] < col_count]
 
-        if vertical > horizontal:
-            return vertical
+def maximize(matrix, deepcopy=True):
+    """ Summary:
+            Solves a variant of the assignment problem
+            where the total cost (now 'profit') is to
+            be maximized rather than minimized.
+            See the minimize method for more info.
+        Arguments:
+            matrix: a list with n (>= 1) entries, where
+                each entry is a list of size n, which
+                elements are non-negative numbers.
+            deepcopy: if set to False, the given matrix
+                (passed as a reference) will be used in
+                the algorithm, and will most likely be
+                modified in the process. Otherwise a
+                copy is constructed.
+        Returns:
+            A list of ordered pairs that describe the n
+            fields in the matrix that maximize the
+            assignment problem.
+    """
+    if deepcopy:
+        matrix = copy.deepcopy(matrix)
+
+    # 'invert' the matrix so we can use the minimize method
+    m = max(max(row) for row in matrix)
+    for row in matrix:
+        row[:] = map(lambda x: m - x, row)
+
+    return minimize(matrix, False)
+    # end of maximize
+
+
+def minimize(matrix, deepcopy=True):
+    """ Summary:
+            Solves a the assignment problem, formalized
+            as follows:
+                "There are a number of agents and a number
+                of tasks. Any agent can be assigned to
+                perform any task, incurring some cost
+                that may vary depending on the agent-task
+                assignment. It is required to perform all
+                tasks by assigning exactly one agent to each
+                task and exactly one task to each agent in
+                such a way that the total cost of the
+                assignment is minimized."
+        Arguments:
+            matrix: a list with n (>= 1) entries, where
+                each entry is a list of size n, which
+                elements are non-negative numbers.
+            deepcopy: if set to False, the given matrix
+                (passed as a reference) will be used in
+                the algorithm, and will most likely be
+                modified in the process. Otherwise a
+                copy is constructed.
+        Returns:
+            A list of ordered pairs that describe the n
+            fields in the matrix that minimize the
+            assignment problem.
+    """
+    if deepcopy:
+        matrix = copy.deepcopy(matrix)
+    n = len(matrix)
+
+    # Step 1:
+    # For each row of the matrix, find the smallest element and
+    # subtract it from every element in its row. Go to Step 2.
+    for row in matrix:
+        m = min(row)
+        if m != 0:
+            row[:] = map(lambda x: x - m, row)
+
+    mask_matrix = [[SIMPLE] * n for _ in matrix]
+    row_cover = [False] * n
+    col_cover = [False] * n
+
+    # Step 2
+    # Find a zero (Z) in the resulting matrix.  If there is
+    # no starred zero in its row or column, star Z. Repeat for
+    # each element in the matrix. Go to Step 3.
+    for r, row in enumerate(matrix):
+        for c, value in enumerate(row):
+            if value == 0 and not row_cover[r] and not col_cover[c]:
+                mask_matrix[r][c] = STARRED
+                row_cover[r] = True
+                col_cover[c] = True
+
+    row_cover = [False] * n
+    col_cover = [False] * n
+
+    # Step 3
+    # Cover each column containing a starred zero.  If K columns
+    # are covered, the starred zeros describe a complete set of
+    # unique assignments. In this case, go to DONE, otherwise,
+    # go to Step 4.
+
+    match_found = False
+
+    while not match_found:
+        for i in range(n):
+            col_cover[i] = any(mrow[i] == STARRED for mrow in mask_matrix)
+
+        if all(col_cover):
+            match_found = True
+            continue
         else:
-            return horizontal * -1
-    
-    @staticmethod
-    def clear_neighbours(m2, m3, row, col):
+            # Step 4(, 6)
+            zero = _cover_zeroes(matrix, mask_matrix, row_cover, col_cover)
 
-        n = len(m2)
+            # Step 5
+            # Construct a series of alternating primed and starred zeros as
+            # follows.  Let Z0 represent the uncovered primed zero found in
+            # Step 4.  Let Z1 denote the starred zero in the column of Z0
+            # (if any). Let Z2 denote the primed zero in the row of Z1
+            # (there will always be one).  Continue until the series terminates
+            # at a primed zero that has no starred zero in its column. Unstar
+            # each starred zero of the series, star each primed zero of the
+            # series, erase all primes and uncover every line in the matrix.
+            # Return to Step 3.
 
-        if m2[row][col] > 0:
-            for i in range(n):
-                if m2[i][col] > 0:
-                    m2[i][col] = 0
-                m3[i][col] += 1
-        else:
-            for i in range(n):
-                if (m2[row][i] < 0):
-                    m2[row][i] = 0
-                m3[row][i] += 1
+            primes = [zero]
+            stars = []
+            while zero:
+                zero = _find_star_in_col(mask_matrix, zero[1])
+                if zero:
+                    stars.append(zero)
+                    zero = _find_prime_in_row(mask_matrix, zero[0])
+                    stars.append(zero)
 
-        #m2[row][col] = 0
-        #m3[row][col] = 1
-    
-    @staticmethod
-    def print_mat(m):
+            # Erase existing stars
+            for star in stars:
+                mask_matrix[star[0]][star[1]] = SIMPLE
+
+            # Star existing primes
+            for prime in primes:
+                mask_matrix[prime[0]][prime[1]] = STARRED
+
+            # Erase remaining primes
+            for r, row in enumerate(mask_matrix):
+                for c, val in enumerate(row):
+                    if val == PRIMED:
+                        mask_matrix[r][c] = SIMPLE
+
+            row_cover = [False] * n
+            col_cover = [False] * n
+            # end of step 5
+
+        # end of step 3 while
+
+    # reconstruct the solution
+    solution = []
+    for r, row in enumerate(mask_matrix):
+        for c, val in enumerate(row):
+            if val == STARRED:
+                solution.append((r, c))
+    return solution
+    #end of minimize
+
+
+# Internal methods
+
+def prepare_mat(c_mat):
+    row_count = len(c_mat)
+    col_count = len(c_mat[0])
+
+    c_mat = [[c_mat[i][j] for j in range(col_count)] for i in range(row_count)]
+
+    diff = row_count - col_count
+
+    if diff > 0:
+        for i in range(row_count):
+            c_mat[i] += [0 for j in range(diff)]
+    elif diff < 0:
+        new_cols = [[0 for i in range(col_count)] for j in range(-diff)]
+        c_mat += new_cols
         
-        n = len(m)
+    return c_mat
 
-        for row in range(n):
-            string = ''
-            for col in range(n):
-                string += (str(m[row][col]) + '\t')
-            print(string, file=sys.stderr, flush=True)
-        print('\n', file=sys.stderr, flush=True)
         
-    def cover_zeros(self):
 
-        n = len(self.c_mat)
+def _cover_zeroes(matrix, mask_matrix, row_cover, col_cover):
 
-        m2 = [[0 for j in range(n)] for i in range(n)]
-        m3 = [[0 for j in range(n)] for i in range(n)]
+    # Repeat steps 4 and 6 until we are ready to break out to step 5
+    while True:
+        zero = True
 
-        for row in range(n):
-            for col in range(n):
-                if self.c_mat[row][col] == 0:
-                    m2[row][col] = self.rc_max(row, col)
+        # Step 4
+        # Find a noncovered zero and prime it.  If there is no
+        # starred zero in the row containing this primed zero,
+        # go to Step 5. Otherwise, cover this row and uncover
+        # the column containing the starred zero. Continue in
+        # this manner until there are no uncovered zeros left.
+        # Save the smallest uncovered value and go to Step 6.
 
-        #printMat(m2)
+        while zero:
+            zero = _find_noncovered_zero(matrix, row_cover, col_cover)
+            if not zero:
+                break  # continue with step 6
+            else:
+                row = mask_matrix[zero[0]]
+                row[zero[1]] = PRIMED
 
-        for row in range(n):
-            for col in range(n):
-                if abs(m2[row][col]) > 0:
-                    Hungarian.clear_neighbours(m2, m3, row, col)
+                try:
+                    index = row.index(STARRED)
+                except ValueError:
+                    return zero  # continue with step 5
 
-        #printMat(m3)        
-        return m3
+                row_cover[zero[0]] = True
+                col_cover[index] = False
 
-    @staticmethod
-    def get_line_count(m):
-        
-        n = len(m)
-        
-        if n == 1:
-            return 1
+        # Step 6
+        # Add the value found in Step 4 to every element of
+        # each covered row, and subtract it from every element
+        # of each uncovered column.  Return to Step 4 without
+        # altering any stars, primes, or covered lines.
 
-        line_cnt = 0
+        m = min(_uncovered_values(matrix, row_cover, col_cover))
+        for r, row in enumerate(matrix):
+            for c, __ in enumerate(row):
+                if row_cover[r]:
+                    matrix[r][c] += m
+                if not col_cover[c]:
+                    matrix[r][c] -= m
+    # end of _cover_zeroes
 
-        for col in range(n):
-            is_column = True
-            for row in range(n):
-                if m[row][col] == 0:
-                    is_column = False
-                    break
-            if not is_column:
-                continue
-            line_cnt += 1
 
-        for row in range(n):
-            is_row = True
-            for col in range(n):
-                if m[row][col] == 0:
-                    is_row = False
-                    break
-            if not is_row:
-                continue
-            line_cnt += 1
+def _find_noncovered_zero(matrix, row_cover, col_cover):
+    for r, row in enumerate(matrix):
+        for c, value in enumerate(row):
+            if value == 0 and not row_cover[r] and not col_cover[c]:
+                return (r, c)
+    else:
+        return None
 
-            
-        if line_cnt > n:
-            return n
-        
-        return line_cnt
 
-    @staticmethod
-    def find_min(c_mat, mask=None):
-        
-        #Hungarian.print_mat(c_mat)
-        
-        row_count = len(c_mat)
-        col_count = len(c_mat[0])
+def _uncovered_values(matrix, row_cover, col_cover):
+    for r, row in enumerate(matrix):
+        for c, value in enumerate(row):
+            if not row_cover[r] and not col_cover[c]:
+                yield value
 
-        min_elem = float('inf')
-        
-        if mask is not None:
-            for i in range(row_count):
-                for j in range(col_count):
-                    if mask[i][j]:
-                        continue
-                    if c_mat[i][j] < min_elem:
-                        min_elem = c_mat[i][j]
-                        min_pos = (i, j)
-        else:
-            for i in range(row_count):
-                for j in range(col_count):
-                    if c_mat[i][j] < min_elem:
-                        min_elem = c_mat[i][j]
-                        min_pos = (i, j)
 
-        return min_pos
-    
-    def solve(self, c_mat):
-        # Solves a given assignment problem provided
-        # by c_mat, and populates the instance variables
-        # for further analysis.
-        
-        self.prepare_mat(c_mat)
-        
-        for i in range(self.n):
-            row_min = float('inf')
-            for j in range(self.n):
-                if self.c_mat[i][j] < row_min:
-                    row_min = self.c_mat[i][j]
-            for j in range(self.n):
-                self.c_mat[i][j] -= row_min
+def _find_star_in_col(mask_matrix, c):
+    for r, row in enumerate(mask_matrix):
+        if row[c] == STARRED:
+            return (r, c)
+    else:
+        return None
 
-        for i in range(self.n):
-            col_min = float('inf')
-            for j in range(self.n):
-                if self.c_mat[j][i] < col_min:
-                    col_min = self.c_mat[j][i]
-            for j in range(self.n):
-                self.c_mat[j][i] -= col_min
 
-        lines = self.cover_zeros()
-        line_count = Hungarian.get_line_count(lines)
-
-        if line_count == self.n:
-            return self.c_mat
-
-        while (line_count != self.n):
-            min_idx = Hungarian.find_min(self.c_mat, mask=lines)
-            min_elem = self.c_mat[min_idx[0]][min_idx[1]]
-
-            for i in range(self.n):
-                for j in range(self.n):
-                    self.c_mat[i][j] += min_elem * (lines[i][j] - 1)
-
-            lines = self.cover_zeros()
-            line_count = Hungarian.get_line_count(lines)
-
-        return c_mat
-    
-    def get_min_cost(self):
-        # Returns the distance cost of the minimum cost matching
-        
-        cost = 0
-        
-        for i in range(self.row_count_orig):
-            for j in range(self.col_count_orig):
-                if self.c_mat[i][j] == 0:
-                    cost += self.c_mat_orig[i][j]
-                    continue
-        return cost
-    
-    def get_assignments(self):
-        # Returns assignments in an array of tuples, where each tuple
-        # corresponds to an assignment in a (row, col, distance) format.
-        
-        assignments = []
-        
-        for i in range(self.row_count_orig):
-            for j in range(self.col_count_orig):
-                if self.c_mat[i][j] == 0:
-                    assignments.append((i, j, self.c_mat_orig[i][j]))
-                    
-        return assignments
+def _find_prime_in_row(mask_matrix, r):
+    for c, val in enumerate(mask_matrix[r]):
+        if val == PRIMED:
+            return (r, c)
+    else:
+        return None

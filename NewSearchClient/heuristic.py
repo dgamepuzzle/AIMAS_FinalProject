@@ -3,7 +3,7 @@ from collections import defaultdict
 import sys
 from state import State
 
-from hungarian import Hungarian
+from hungarian import hungarian
 
 class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
@@ -239,14 +239,16 @@ class Heuristic(metaclass=ABCMeta):
             distMatrix = [[goalDistsLetter[i][boxCoordsLetter[j][0]][boxCoordsLetter[j][1]] for j in range(box_cnt)] for i in range(goal_cnt)]
             
             # Assign a box to each of the goals with the Hungarian algorithm
-            h = Hungarian()
-            h.solve(distMatrix)
-            
+            #
             # Get assignments in a 
             # [(goalX, boxY), (goalY, boxZ), (goalZ, boxX)] format
             # where goalX..Z and box..Z refers to their corresponding row/col
             # numbers in the DISTANCE MATRIX
-            assignments = h.get_assignments()
+            assignments = hungarian(distMatrix)
+            
+            print('Hungarian assignments:', file=sys.stderr, flush=True)
+            print(assignments, file=sys.stderr, flush=True)
+            
             
             # Get the real IDs of the assigned goals and boxes
             idAssignments = [(self.goalIds[letter][assignment[0]], boxIds[letter][assignment[0]]) for assignment in assignments]
@@ -301,14 +303,11 @@ class Heuristic(metaclass=ABCMeta):
             # agent3    2    10   7
             distMatrix = [Heuristic.get_distance_one_to_many(State.walls, agentCoord, boxCoordsColor) for agentCoord in agentCoordsColor]
             
-            h = Hungarian()
-            h.solve(distMatrix)
-            
             # Get assignments in a 
             # [(agentX, boxY), (agentY, boxZ), (agentZ, boxX)] format
             # where agentX..Z and box..Z refers to their corresponding row/col
             # numbers in the DISTANCE MATRIX
-            assignments = h.get_assignments()
+            assignments = hungarian(distMatrix)
             
             # Get the real IDs of the assigned agents and boxes
             idAssignments = [(agentIds[color][assignment[0]], boxIds[color][assignment[1]]) for assignment in assignments]
@@ -335,6 +334,8 @@ class Heuristic(metaclass=ABCMeta):
             goalBoxAss = self.goalBoxAssignments[letter]
             goalDists = self.goalDistances[letter]
 
+            print(goalBoxAss, file=sys.stderr, flush=True)
+
             # Get every GOAL-BOX assignment
             for i in range(len(goalBoxAss)):
                 
@@ -343,6 +344,9 @@ class Heuristic(metaclass=ABCMeta):
                 boxCoordsCurrent = next(box for box in state.boxes if box.id == goalBoxAss[i][1]).coords
                 
                 # Add it to the total distance
+                print('STAT', file=sys.stderr, flush=True)
+                print(i, file=sys.stderr, flush=True)
+                print(len(goalDists), file=sys.stderr, flush=True)
                 totalDist += (goalDists[i][boxCoordsCurrent[0]][boxCoordsCurrent[1]] * goalBoxMultiplier)
             
         # For each color...
