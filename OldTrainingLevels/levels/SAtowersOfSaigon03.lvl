@@ -1,6 +1,21 @@
+#domain
+hospital
+#levelname
+SAtowersOfSaigon03
+#colors
+red: 0, A, B, C
+#initial
 +++++++
 +  0  + 
-+B+ +a+ 
-+A+ +b+ 
-+C+ +c+ 
++B+ + + 
++A+ + + 
++C+ + + 
 +++++++
+#goal
++++++++
++     + 
++ + +A+ 
++ + +B+ 
++ + +C+ 
++++++++
+#end

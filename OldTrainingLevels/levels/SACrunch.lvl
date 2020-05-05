@@ -1,8 +1,25 @@
+#domain
+hospital
+#levelname
+SACrunch
+#colors
+red: 0, A, B, C, D
+#initial
 ++++++++
-+0+  cb+
-+ A+ ad+
++0+    +
++ A+   +
 + +B+  +
 +  DC+ +
 + ++++ +
 +      +
 ++++++++
+#goal
+++++++++
++ +  CB+
++  + AD+
++ + +  +
++    + +
++ ++++ +
++      +
+++++++++
+#end

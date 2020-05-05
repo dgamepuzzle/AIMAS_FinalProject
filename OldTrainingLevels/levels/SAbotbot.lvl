@@ -1,6 +1,21 @@
+#domain
+hospital
+#levelname
+SAbotbot
+#colors
+red: 0, A
+#initial
 ++++++++++
 +AAAA+++++
 +A++A+++++
 +A++    ++
-+a++ 0  ++
++ ++ 0  ++
 ++++++++++
+#goal
+++++++++++
++    +++++
++ ++ +++++
++ ++    ++
++A++    ++
+++++++++++
+#end

@@ -1,13 +1,35 @@
+#domain
+hospital
+#levelname
+SAtowersOfSaigon10
+#colors
+red: 0, A, B, C, D, E, F, G, H, I, J
+#initial
 +++++++
 +  0  + 
-+I+ +a+ 
-+G+ +b+ 
-+E+ +c+ 
-+C+ +d+
-+A+ +e+
-+B+ +f+
-+D+ +g+
-+F+ +h+
-+H+ +i+
-+J+ +j+
++I+ + + 
++G+ + + 
++E+ + + 
++C+ + +
++A+ + +
++B+ + +
++D+ + +
++F+ + +
++H+ + +
++J+ + +
 +++++++
+#goal
++++++++
++     + 
++ + +A+ 
++ + +B+ 
++ + +C+ 
++ + +D+
++ + +E+
++ + +F+
++ + +G+
++ + +H+
++ + +I+
++ + +J+
++++++++
+#end
