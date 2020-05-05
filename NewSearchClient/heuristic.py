@@ -41,7 +41,6 @@ class Heuristic(metaclass=ABCMeta):
         
         # Populate the above containers
         for goal in initial_state.goals:
-            print(goal.id, file=sys.stderr, flush=True)
             self.goalDistances[goal.letter.lower()].append(
                 Heuristic.gridBfs(initial_state.walls, goal.coords)
             )
@@ -246,10 +245,6 @@ class Heuristic(metaclass=ABCMeta):
             # numbers in the DISTANCE MATRIX
             assignments = hungarian(distMatrix)
             
-            print('Hungarian assignments:', file=sys.stderr, flush=True)
-            print(assignments, file=sys.stderr, flush=True)
-            
-            
             # Get the real IDs of the assigned goals and boxes
             idAssignments = [(self.goalIds[letter][assignment[0]], boxIds[letter][assignment[0]]) for assignment in assignments]
             
@@ -334,8 +329,6 @@ class Heuristic(metaclass=ABCMeta):
             goalBoxAss = self.goalBoxAssignments[letter]
             goalDists = self.goalDistances[letter]
 
-            print(goalBoxAss, file=sys.stderr, flush=True)
-
             # Get every GOAL-BOX assignment
             for i in range(len(goalBoxAss)):
                 
@@ -344,9 +337,6 @@ class Heuristic(metaclass=ABCMeta):
                 boxCoordsCurrent = next(box for box in state.boxes if box.id == goalBoxAss[i][1]).coords
                 
                 # Add it to the total distance
-                print('STAT', file=sys.stderr, flush=True)
-                print(i, file=sys.stderr, flush=True)
-                print(len(goalDists), file=sys.stderr, flush=True)
                 totalDist += (goalDists[i][boxCoordsCurrent[0]][boxCoordsCurrent[1]] * goalBoxMultiplier)
             
         # For each color...
