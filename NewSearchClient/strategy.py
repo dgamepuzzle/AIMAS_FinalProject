@@ -1,8 +1,11 @@
+import sys
 from abc import ABCMeta, abstractmethod
 from collections import deque
 from time import perf_counter
 
 import configuration as config
+from heuristic import Heuristic
+from state import State
 
 
 class Strategy(metaclass=ABCMeta):
@@ -23,7 +26,12 @@ class Strategy(metaclass=ABCMeta):
         return perf_counter() - self.start_time
     
     def search_status(self) -> 'str':
-        return '#Explored: {:6}, #Frontier: {:6}, #Generated: {:6}, Time: {:3.2f} s, Alloc: {:4.2f} MB, MaxAlloc: {:4.2f} MB'.format(self.explored_count(), self.frontier_count(), self.explored_count() + self.frontier_count(), self.time_spent(), config.get_memory_usage(), config.max_usage)
+        return '#Explored: {:6}, #Frontier: {:6}, #Generated: {:6}, Time: {:3.2f} s, Alloc: {:4.2f} MB, MaxAlloc: {:4.2f} MB'.format(self.explored_count(),
+                                                                                                                                     self.frontier_count(),
+                                                                                                                                     self.explored_count() + self.frontier_count(),
+                                                                                                                                     self.time_spent(),
+                                                                                                                                     config.get_memory_usage(),
+                                                                                                                                     config.max_usage)
     
     @abstractmethod
     def get_and_remove_leaf(self) -> 'State': raise NotImplementedError
@@ -129,6 +137,7 @@ class StrategyBestFirst(Strategy):
         return 'Best-first Search using {}'.format(self.heuristic)
 
 
+# Structure to save states sorted by their heuristic 'f' value.
 class PriorityQueue(object): 
     def __init__(self, heuristic: 'Heuristic'): 
         self.queue = [] 
@@ -137,53 +146,33 @@ class PriorityQueue(object):
     def __str__(self): 
         return ' '.join([str(i) for i in self.queue]) 
   
-    # for checking if the queue is empty 
+    # Check if the queue is empty.
     def isEmpty(self): 
         return len(self.queue) == [] 
     
-     # for checking if the queue is empty 
+    # Check length of the queue.
     def length(self): 
         return len(self.queue) 
   
-    # for inserting an element in the queue 
+    # Insert an element in the queue taking into account its priority.
     def insertInOrder(self, data): 
         data.h = self.heuristic.f(data)
-        
         try: 
             if len(self.queue) == [] :
                 self.queue.append(data)
                 return
-            
             for i in range(len(self.queue)): 
                 if data.h < self.queue[i].h: 
-                    self.queue.insert(i, data) #+1 to insert after index
+                    self.queue.insert(i, data) # +1 to insert after index
                     return
             self.queue.append(data)
             return    
         except IndexError: 
-            print() 
+            print('Indexation error while trying to add a new item to the PriorityQueue for heuristics.', file=sys.stderr, flush=True)
             exit() 
-        
-        #self.queue.append(data)
   
-    # for popping an element based on Priority 
+    # Popping an element based on Priority.
     def delete(self): 
-        
         item = self.queue[0] 
         del self.queue[0] 
         return item 
-        
-        
-# =============================================================================
-#         try: 
-#             top = 0
-#             for i in range(len(self.queue)): 
-#                 if self.heuristic.f(self.queue[i]) < self.heuristic.f(self.queue[top]): 
-#                     top = i 
-#             item = self.queue[top] 
-#             del self.queue[top] 
-#             return item 
-#         except IndexError: 
-#             print() 
-#             exit() 
-# =============================================================================

@@ -6,11 +6,11 @@ Created on Sat Apr 11 17:14:20 2020
 """
 
 import copy as cp
-import sys
 import random
+import sys
+from itertools import product
 
 from graph import Graph
-from itertools import product
 from jointaction import Action, ActionType, ALL_ACTIONS
 from level_elements import Agent, Box, Goal
 
@@ -23,25 +23,25 @@ class State:
     walls = []
     
     def __init__(self, copy: 'State' = None, level_lines = "", goal_state = False):
-        
         self._hash = None
-        if copy ==None:
+        if copy == None:
             self.graph = Graph()
             self.agents = []
             self.boxes = []
             self.parent = None
             self.jointaction = []
-
             self.g = 0
             self.h = -1
-            
             State.walls = [[False for _ in range(State.MAX_COL)] for _ in range(State.MAX_ROW)]
             
-            #Parse full level (build graph and save mobile entities)
+            # Parse full level (build static graph and save static/non-static entities).
             try:
                 for row, line in enumerate(level_lines):
                     for col, char in enumerate(line):
+                        
                         if char != '+':
+                            
+                            # First, as it's not a wall, add node to the static graph.
                             cur_node = self.graph.coords2id(col,row,State.MAX_COL)
                             self.graph.add_node(cur_node)
                             for coord in [(-1,0),(1,0),(0,1),(0,-1)]:
@@ -54,34 +54,40 @@ class State:
                                     self.graph.add_node(dest_node)
                                     self.graph.add_edge(cur_node, dest_node, 1) # default distance = 1
                                     #print(str(cur_node) + " ->" + str(dest_node), file=sys.stderr, flush=True)
-                            #Parse agents
+                            
+                            # Parse agents.
                             if char in "0123456789":
                                 color = State.colors[char]
                                 self.agents.append(Agent(char,color,(row, col)))
+                                #print("Saving agent at "+ str((row,col)), file=sys.stderr, flush=True)
                                 
-                                print("saving agent at "+ str((row,col)), file=sys.stderr, flush=True)
-                            #Parse boxes
+                            # Parse boxes.
                             elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
                                 color = State.colors[char]
                                 self.boxes.append(Box(char, color, (row, col)))
                                 if goal_state: #Parse goals
-                                    print("adding goal at "+ str((row,col)), file=sys.stderr, flush=True)
                                     State.goals.append(Goal(char,(row, col)))
-                            #Parse spaces
+                                    #print("adding goal at "+ str((row,col)), file=sys.stderr, flush=True)
+                            
+                            # Parse spaces.
                             elif (char ==' '):
-                                #Do nothing after creating the node
+                                # Do nothing after creating the node.
                                 pass
+                            
                             else:
                                 print('Error, read invalid level character: {}'.format(char), file=sys.stderr, flush=True)
                                 sys.exit(1)
+                        
                         else:
-                            # Walls are not being processed
+                            # Save wall position.
                             State.walls[row][col] = True
                             pass
                 
             except Exception as ex:
                 print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
                 sys.exit(1)
+        
+        # Generate a state with info. from parent.
         else:
             self.graph = copy.graph
             self.agents = cp.deepcopy(copy.agents)
@@ -91,126 +97,115 @@ class State:
             
             self.g = copy.g
             self.h = copy.h
+            
 
     def get_children(self) -> '[State, ...]':
         '''
         Returns a list of child states attained from applying every combination of applicable actions in the current state.
         The order of the actions within the joint action is random.
         '''
-        #print('get children', file=sys.stderr, flush=True)
         children = []
         joint_actions = []
         num_agents = len(self.agents)
-        # Compute available actiones per each agent
+        
+        # Compute available actions per each agent.
         for agent_idx in range(num_agents):
-            joint_actions.append(self.agents[agent_idx])
-        # Generate permutations with the available actions
-        perms = list(product(ALL_ACTIONS, repeat= num_agents))
+            joint_actions.append(self.check_agent_possible_actions(self.agents[agent_idx]))
+            
+        # Generate permutations with the available actions.
+        perms = list(product(*joint_actions))
         #print(str(perms), file=sys.stderr, flush=True)
-        # Generate a children state for each permutation
-        #print(str(perms), file=sys.stderr, flush=True)
+        
+        # Generate a children state for each permutation.
         for perm in perms:
             child = State(self)
             child.jointaction = perm
-            # Manage conflicts and update the positions of agents and boxes
-            '''
-            print("equal: "+str(child==self), file=sys.stderr, flush=True)
-            print("this state pos: "+str(self.agents[0].coords), file=sys.stderr, flush=True)
-            child.agents[0].coords = (99,99)
-            print("this state pos after: "+str(self.agents[0].coords), file=sys.stderr, flush=True)
-            print("child after: "+str(child.agents[0].coords), file=sys.stderr, flush=True)
-            print(str(m), file=sys.stderr, flush=True)
-            '''
             
+            # Manage conflicts and update the positions of agents and boxes.
             if child.update_positions():
-                #print("True", file=sys.stderr, flush=True)
                 child.parent = self
                 child.g += 1
                 children.append(child)
-                
-                #print(str(self.jointaction), file=sys.stderr, flush=True)
-                #print(str(self), file=sys.stderr, flush=True)
         
+        # Sort children states randomly.
         State._RNG.shuffle(children)
         return children
     
+    
     def check_agent_possible_actions(self, agent: 'Agent'):
         actions = []
+        # Adding 'No action' possibility
         actions.append(Action(ActionType.NoOp, None, None))
         for action in ALL_ACTIONS:
-            # Determine if action is applicable.
+            # Determine new coords. for the agent
             new_agent_row = agent.coords[0] + action.agent_dir.way[0]
             new_agent_col = agent.coords[1] + action.agent_dir.way[1]
-            
+            # Check if 'Move' action is possible
             if action.action_type is ActionType.Move:
                 if self.is_free(new_agent_row, new_agent_col):
                     actions.append(action)
+            # Check if 'Push' action is possible
             elif action.action_type is ActionType.Push:
                 if self.box_at(new_agent_row, new_agent_col, agent.color):
                     new_box_row = new_agent_row + action.box_dir.way[0]
                     new_box_col = new_agent_col + action.box_dir.way[1]
                     if self.is_free(new_box_row, new_box_col):
                         actions.append(action)
+            # Check if 'Pull' action is possible
             elif action.action_type is ActionType.Pull:
                 if self.is_free(new_agent_row, new_agent_col):
-                    box_row = self.agent_row + action.box_dir.way[0]
-                    box_col = self.agent_col + action.box_dir.way[1]
+                    box_row = agent.coords[0] + action.box_dir.way[0]
+                    box_col = agent.coords[1] + action.box_dir.way[1] 
                     if self.box_at(box_row, box_col, agent.color):
-                        actions.append(action)
-                        
-        
+                        actions.append(action)     
         return actions
+    
     
     def update_positions(self) -> 'bool':
         for idx, action in enumerate(self.jointaction):
-            #print(str(action), file=sys.stderr, flush=True)
-            agent = self.agents[idx]
-            new_agent_row = agent.coords[0] + action.agent_dir.way[0]
-            new_agent_col = agent.coords[1] + action.agent_dir.way[1]
-            if action.action_type is ActionType.Move:
-                if self.is_free(new_agent_row, new_agent_col):
-                    self.agents[idx].coords = (new_agent_row, new_agent_col)
-                else: return False
-            elif action.action_type is ActionType.Push:
-                box = self.box_at(new_agent_row, new_agent_col, agent.color)
-                if box != None:
-                    new_box_row = box.coords[0] + action.box_dir.way[0]
-                    new_box_col = box.coords[1] + action.box_dir.way[1]
-                    if self.is_free(new_box_row, new_box_col):
+            if action.action_type is ActionType.NoOp:
+                pass
+            else:
+                agent = self.agents[idx]
+                new_agent_row = agent.coords[0] + action.agent_dir.way[0]
+                new_agent_col = agent.coords[1] + action.agent_dir.way[1]
+                if action.action_type is ActionType.Move:
+                    if self.is_free(new_agent_row, new_agent_col):
                         self.agents[idx].coords = (new_agent_row, new_agent_col)
-                        #TODO Fix this, identify the box first
-                        box.coords = (new_box_row, new_box_col)
-                        #self.boxes[idx].coords[1] = new_box_col
                     else: return False
-                else: return False
-            elif action.action_type is ActionType.Pull:
-                if self.is_free(new_agent_row, new_agent_col):
-                    box_row = agent.coords[0] - action.box_dir.way[0]
-                    box_col = agent.coords[1] - action.box_dir.way[1] 
-                    box = self.box_at(box_row, box_col, agent.color)
+                elif action.action_type is ActionType.Push:
+                    box = self.box_at(new_agent_row, new_agent_col, agent.color)
                     if box != None:
                         new_box_row = box.coords[0] + action.box_dir.way[0]
                         new_box_col = box.coords[1] + action.box_dir.way[1]
-                        self.agents[idx].coords = (new_agent_row, new_agent_col)
-                        #TODO Fix this, identify the box first
-                        box.coords = (new_box_row, new_box_col)
-                        #self.boxes[self.agent_row][self.agent_col] = self.boxes[box_row][box_col]
-                        #self.boxes[box_row][box_col] = None
+                        if self.is_free(new_box_row, new_box_col):
+                            self.agents[idx].coords = (new_agent_row, new_agent_col)
+                            box.coords = (new_box_row, new_box_col)
+                        else: return False
                     else: return False
-                else: return False
-            elif action.action_type is ActionType.NoOp: pass
+                elif action.action_type is ActionType.Pull:
+                    if self.is_free(new_agent_row, new_agent_col):
+                        box_row = agent.coords[0] + action.box_dir.way[0]
+                        box_col = agent.coords[1] + action.box_dir.way[1] 
+                        box = self.box_at(box_row, box_col, agent.color)
+                        if box != None:
+                            new_box_row = agent.coords[0]
+                            new_box_col = agent.coords[1]
+                            self.agents[idx].coords = (new_agent_row, new_agent_col)
+                            box.coords = (new_box_row, new_box_col)
+                        else: return False
+                    else: return False
         return True
     
     def is_initial_state(self) -> 'bool':
         return self.parent is None
     
     def is_goal_state(self) -> 'bool':
-        
         for goal in State.goals:
             goal_is_statisfied = False
             for box in self.boxes:
                 if(goal.letter == box.letter and goal.coords == box.coords):
-                    print(str(goal.coords) +" = "+  str(box.coords), file=sys.stderr, flush=True)
+                    #print(str(goal.coords) +" = "+  str(box.coords), file=sys.stderr, flush=True)
                     goal_is_statisfied=True
                     break
             
@@ -227,6 +222,11 @@ class State:
         return plan
     
     def is_free(self, row: 'int', col: 'int') -> 'bool':
+        '''if row==3 and col==10 and not any(agent.coords == (row,col) for agent in self.agents):
+            print("not State.walls[row][col]="+str(not State.walls[row][col]) \
+              +" not any(box.coords == (row,col) for box in self.boxes)="+str(not any(box.coords == (row,col) for box in self.boxes)) \
+              +" not any(agent.coords == (row,col) for agent in self.agents)="+str(not any(agent.coords == (row,col) for agent in self.agents)), file=sys.stderr, flush=True)
+            print(self, file=sys.stderr, flush=True)'''
         return not State.walls[row][col] and not any(box.coords == (row,col) for box in self.boxes) and not any(agent.coords == (row,col) for agent in self.agents)
     
     def box_at(self, row: 'int', col: 'int', color: 'str') -> 'Box':
