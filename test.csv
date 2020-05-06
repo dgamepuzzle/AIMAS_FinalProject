@@ -1,0 +1,4 @@
+level,strategy,num_agents,num_boxes,num_colors,solved,num_steps,runtime,explored,frontier,generated,mem
+MAExample,greedy,2,2,2,1,30,0.06227819999999995,43,98,141,62.29296875
+MAExample,astar,2,2,2,1,30,0.1270966,84,85,169,62.5078125
+MAExample,wastar,2,2,2,1,30,0.06124669999999999,43,98,141,62.49609375
