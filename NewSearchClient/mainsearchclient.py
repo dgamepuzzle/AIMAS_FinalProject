@@ -1,4 +1,5 @@
 import argparse
+import pandas as pd
 #import re
 import sys
 
@@ -16,7 +17,7 @@ STRATEGY = "greedy"
 #4. Send commands
 #5. Celebrate
 
-def main(strategy_str: 'str'):
+def main(strategy_str: 'str', df: 'object'):
     
     # Read the level data from server.
     com = Communicator()
@@ -29,17 +30,29 @@ def main(strategy_str: 'str'):
     commands = planner.resolve()
     for command in commands:  
         print(str(command.jointaction), file=sys.stderr, flush=True)
+        
+    # Write results in CSV file if needed
+    if df is not None:
+        df = df.append({'level': com.level_name, 'strategy': strategy_str, 'num_agents': len(planner.start_state.agents),
+                   'num_boxes': len(planner.start_state.boxes), 'num_colors': len(set(planner.start_state.colors.values())),
+                   'solved': 1,'num_steps': len(commands), 'runtime': planner.strategy.time_spent(),
+                   'explored': planner.strategy.explored_count(), 'frontier': planner.strategy.frontier_count(),
+                   'generated': planner.strategy.explored_count() + planner.strategy.frontier_count(),
+                   'mem': configuration.get_memory_usage()}, ignore_index=True)
     
     # Send actions to server.
     com.send_commands_to_server(commands)
 
     # Level completed!
+    return df
 
 if __name__ == '__main__':
     # Program arguments, reads the arguments from the command prompt through the argparse module.
     ##This code is taken directly from the warmup assignment.
     parser = argparse.ArgumentParser(description='Simple client based on state-space graph search.')
     parser.add_argument('--max-memory', metavar='<MB>', type=float, default=2048.0, help='The maximum memory usage allowed in MB (soft limit, default 2048).')
+    
+    parser.add_argument('--csv', type=str, help='The absolute path to the CSV file where write the results.')
     
     # Parsing strategy args.
     strategy_group = parser.add_mutually_exclusive_group()
@@ -55,6 +68,23 @@ if __name__ == '__main__':
     # Set max memory usage allowed (soft limit).
     configuration.max_memory_usage = args.max_memory
     
+    # Prepare CSV file to print results
+    if args.csv:
+        try:
+            df = pd.read_csv(args.csv)
+        except:
+            df = pd.DataFrame(columns = ['level','strategy','num_agents','num_boxes','num_colors','solved','num_steps','runtime','explored','frontier','generated','mem'])
+    else:
+        df = None
+    
     # Run client.
+<<<<<<< HEAD
     main(STRATEGY)
+=======
+    df = main(args.strategy, df)
+    
+    # Save CSV file
+    if df is not None:
+        df.to_csv(args.csv, index=False)
+>>>>>>> c2d24f2ed1f753ecc854f35dc80af41fb7e384f4
     

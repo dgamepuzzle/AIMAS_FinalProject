@@ -33,10 +33,10 @@ class Communicator:
             if (line[0] =="#"):
                 current_command = line
             elif (current_command =="#domain"):
-                domain= line
+                Communicator.domain = line
                 
             elif (current_command =="#levelname"):
-                level_name= line
+                Communicator.level_name = line
             
             elif (current_command =="#colors"):
                 colorstext.append(line)
