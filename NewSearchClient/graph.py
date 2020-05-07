@@ -77,6 +77,14 @@ class Graph:
             #print(str(line), file=sys.stderr, flush=True)
             lines.append(''.join(line))
         return '\n'.join(lines)
+    
+# =============================================================================
+#     def __deepcopy__(self, memodict={}):
+#         copy_object = Graph()
+#         for node in self.nodes:
+#             copy_object.add_node = cp.deepcopy(node)
+#         return copy_object
+# =============================================================================
 
 class Node:
     def __init__(self, i,j):
@@ -94,6 +102,14 @@ class Node:
     def id2coords(self, id):
         cols = state.State.MAX_COL
         return (int(id/cols),id % cols)
+    
+# =============================================================================
+#     def __deepcopy__(self, memodict={}):
+#         copy_object = Node()
+#         copy_object.distanceToGoal = self.distanceToGoal
+#         copy_object.edges = cp.deepcopy(node)
+#         return copy_object
+# =============================================================================
     
     def __repr__(self):
         return "Node at: " + str(self.id2coords(self.value)) + "with " + str(len(self.edges)) + " edges, and distance to goal " + str(self.distanceToGoal)
