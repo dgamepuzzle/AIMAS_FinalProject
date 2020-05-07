@@ -9,6 +9,8 @@ from _collections import defaultdict
 from collections import deque
 import sys
 
+sys.setrecursionlimit(10000)
+
 class Graph:
     def __init__(self):
         self.nodes = set()
@@ -47,8 +49,8 @@ class Graph:
         for edge in node.edges:
             if edge.distanceToGoal == None:
                 edge.distanceToGoal = node.distanceToGoal +1
-                print('current node: '+ str(node), file=sys.stderr, flush=True)
-                print('adding edge: '+ str(edge), file=sys.stderr, flush=True)
+                #print('current node: '+ str(node), file=sys.stderr, flush=True)
+                #print('adding edge: '+ str(edge), file=sys.stderr, flush=True)
                 queue.append(edge)
         
         if len(queue) >0:
