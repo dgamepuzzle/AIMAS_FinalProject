@@ -5,6 +5,8 @@ Created on Wed Apr 15 14:55:58 2020
 @author: AIStars group
 """
 
+from graph import Graph
+
 class Agent:
     
     def __init__(self, number: 'int', color: 'str', coords):
@@ -51,6 +53,7 @@ class Goal:
         self.letter = letter
         self.coords = coords
         self.id = Goal.autoIncrement
+        self.distanceGraph = None; #will be set in the state class
         Goal.autoIncrement += 1
     
     def is_at(self, row, col):

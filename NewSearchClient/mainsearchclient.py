@@ -7,6 +7,7 @@ from communicator import Communicator
 from planning import Plan
 
 GROUPNAME = "AIStars"
+STRATEGY = "greedy"
 
 #GENERAL STEPS:
 #1. Send client name
@@ -55,5 +56,5 @@ if __name__ == '__main__':
     configuration.max_memory_usage = args.max_memory
     
     # Run client.
-    main(args.strategy)
+    main(STRATEGY)
     

@@ -10,7 +10,7 @@ import random
 import sys
 from itertools import product
 
-from graph import Graph
+from graph import Graph, Node
 from jointaction import Action, ActionType, ALL_ACTIONS
 from level_elements import Agent, Box, Goal
 
@@ -22,10 +22,12 @@ class State:
     colors = []
     walls = []
     
+    mainGraph = Graph()
+    goalGraphs = []
+    
     def __init__(self, copy: 'State' = None, level_lines = "", goal_state = False):
         self._hash = None
         if copy == None:
-            self.graph = Graph()
             self.agents = []
             self.boxes = []
             self.parent = None
@@ -42,17 +44,18 @@ class State:
                         if char != '+':
                             
                             # First, as it's not a wall, add node to the static graph.
-                            cur_node = self.graph.coords2id(col,row,State.MAX_COL)
-                            self.graph.add_node(cur_node)
+                            cur_node = State.mainGraph.create_or_get_node(row, col)
+                            
+                                
                             for coord in [(-1,0),(1,0),(0,1),(0,-1)]:
                                 k = coord[0]
                                 l = coord[1]
                                 h = min(State.MAX_ROW-1, max(0, row+k))
                                 u = min(State.MAX_COL-1, max(0, col+l))
                                 if level_lines[h][u]!='+':
-                                    dest_node = self.graph.coords2id(h, u, State.MAX_COL)
-                                    self.graph.add_node(dest_node)
-                                    self.graph.add_edge(cur_node, dest_node, 1) # default distance = 1
+                                    dest_node = State.mainGraph.create_or_get_node(h, u)
+                                    cur_node.add_edge(dest_node)
+                                    #mainGraph.add_edge(cur_node, dest_node, 1) # default distance = 1
                                     #print(str(cur_node) + " ->" + str(dest_node), file=sys.stderr, flush=True)
                             
                             # Parse agents.
@@ -86,10 +89,24 @@ class State:
             except Exception as ex:
                 print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
                 sys.exit(1)
+              
+                
+            #Generate goal graphs
+            
+            for goal in State.goals:
+                new_goal_state = cp.deepcopy(State.mainGraph)
+                new_goal_state.create_goal_graph(goal.coords)
+                State.goalGraphs.append(new_goal_state)
+                goal.distanceGraph = new_goal_state
+                
+                
+            #print(list(State.mainGraph.nodes)[0], file=sys.stderr, flush=True) 
+           # print(State.mainGraph, file=sys.stderr, flush=True)
+            
         
+           
         # Generate a state with info. from parent.
         else:
-            self.graph = copy.graph
             self.agents = cp.deepcopy(copy.agents)
             self.boxes = cp.deepcopy(copy.boxes)
             self.parent = copy.parent
