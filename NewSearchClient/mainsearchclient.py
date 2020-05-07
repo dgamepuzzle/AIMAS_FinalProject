@@ -78,13 +78,10 @@ if __name__ == '__main__':
         df = None
     
     # Run client.
-<<<<<<< HEAD
-    main(STRATEGY)
-=======
+
     df = main(args.strategy, df)
     
     # Save CSV file
     if df is not None:
         df.to_csv(args.csv, index=False)
->>>>>>> c2d24f2ed1f753ecc854f35dc80af41fb7e384f4
     
