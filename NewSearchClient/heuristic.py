@@ -15,7 +15,9 @@ class Heuristic(metaclass=ABCMeta):
         # goalDistances - "A" : [[distances from goal 1] , [distances from goal 2]]
         #               - "B" : [[distances from goal 3]]
         #               - "C" : [[distances from goal 4]] etc...
-        self.goalDistances = defaultdict(list)
+        self.goalDistancesByLetter = defaultdict(list)
+        
+        self.goalDistances = []
         
         # Stores corresponding goal coordinates.
         # goalCoords - "A" : [(coords of goal 1), (coords of goal2)]
@@ -37,13 +39,17 @@ class Heuristic(metaclass=ABCMeta):
         
         # Keeps track of boxes that have been pushed to their goals
         # UNUESED FOR NOW - FEATURE TO BE IMPLEMENTED
-        self.boxesIdsInGoal = set()
+        self.boxIdsInGoal = set()
+        
+        # Keeps track of goals that have been completed
+        self.goalIdsCompleted = set()
         
         # Populate the above containers
         for goal in initial_state.goals:
-            self.goalDistances[goal.letter.lower()].append(
-                Heuristic.gridBfs(initial_state.walls, goal.coords)
-            )
+            distsFromGoal = Heuristic.gridBfs(initial_state.walls, goal.coords)
+            self.goalDistances.append(distsFromGoal)
+            self.goalDistancesByLetter[goal.letter.lower()].append(distsFromGoal)
+            
             self.goalCoords[goal.letter.lower()].append(goal.coords)
             self.goalIds[goal.letter.lower()].append(goal.id)
         
@@ -197,13 +203,15 @@ class Heuristic(metaclass=ABCMeta):
     
     def resetAssignments(self, state: 'State'):
         
+        print('R E A S S I G N M E N T', file=sys.stderr, flush=True)
+        
         # TO DO: HANDLE CASE WHEN THERE ARE LESS AGENTS THAN BOXES TO BE PUSHED
         # Allocates one distinct box to each of the goal and
         # allocates these boxes to distinct agents.
         
         # Reset the variables containing the assignments
         self.goalBoxAssignments = defaultdict(list)
-        self.boxAgentAssignments = defaultdict(list)
+        self.agentBoxAssignments = defaultdict(list)
         
         # BOX - GOAL ASSIGNMENT SECTION
         
@@ -213,16 +221,35 @@ class Heuristic(metaclass=ABCMeta):
         boxCoords= defaultdict(list)
         
         for box in state.boxes:
+            # Do not assign boxes already in goal
+            if box.id in self.boxIdsInGoal:
+                continue
+            
             boxIds[box.letter.lower()].append(box.id)
-            boxCoords[box.letter.lower()].append(box.coords) 
+            boxCoords[box.letter.lower()].append(box.coords)
+            
+        goalIds = defaultdict(list)
+        goalCoords = defaultdict(list)
+        goalDistances = defaultdict(list)
+        
+        for idx, goal in enumerate(state.goals):
+            # Do not assign boxes already in goal
+            if goal.id in self.goalIdsCompleted:
+                continue
+            
+            goalIds[goal.letter.lower()].append(goal.id)
+            goalCoords[goal.letter.lower()].append(goal.coords)
+            goalDistances[goal.letter.lower()].append(self.goalDistances[idx])
+            
         
         # DO IT FOR EACH GOAL/BOX LETTER
-        for letter in self.goalDistances:
+        for letter in goalDistances:
             
             # Create shorthands for readable code (they're just references,
             # without extra memory consumption)
+            
             boxCoordsLetter = boxCoords[letter]
-            goalDistsLetter = self.goalDistances[letter]
+            goalDistsLetter = goalDistances[letter]
             
             box_cnt = len(boxCoordsLetter)
             goal_cnt = len(goalDistsLetter)
@@ -245,8 +272,19 @@ class Heuristic(metaclass=ABCMeta):
             # numbers in the DISTANCE MATRIX
             assignments = hungarian(distMatrix)
             
+            print('STUFF', file=sys.stderr, flush=True)
+            print(distMatrix, file=sys.stderr, flush=True)
+            print(assignments, file=sys.stderr, flush=True)
+            print('GOALIDs', file=sys.stderr, flush=True)
+            print(goalIds[letter], file=sys.stderr, flush=True)
+            print('BOXIDs', file=sys.stderr, flush=True)
+            print(boxIds[letter], file=sys.stderr, flush=True)
+            for assignment in assignments:
+                print('ASSG', file=sys.stderr, flush=True)
+                print(assignment, file=sys.stderr, flush=True)
+            
             # Get the real IDs of the assigned goals and boxes
-            idAssignments = [(self.goalIds[letter][assignment[0]], boxIds[letter][assignment[0]]) for assignment in assignments]
+            idAssignments = [(goalIds[letter][assignment[0]], boxIds[letter][assignment[0]]) for assignment in assignments]
             
             # Write the result as the assignment of boxes and goals of letter "letter".
             self.goalBoxAssignments[letter] = idAssignments
@@ -281,6 +319,8 @@ class Heuristic(metaclass=ABCMeta):
         for agent in state.agents:
             agentIds[agent.color].append(agent.number)
             agentCoords[agent.color].append(agent.coords)
+            
+        boxIdsWithAgents = []
     
         # DO IT FOR EACH AGENT/BOX COLOR ...
         for color in agentCoords:
@@ -307,8 +347,22 @@ class Heuristic(metaclass=ABCMeta):
             # Get the real IDs of the assigned agents and boxes
             idAssignments = [(agentIds[color][assignment[0]], boxIds[color][assignment[1]]) for assignment in assignments]
             
+            # DEBUG
+            boxIdsWithAgents += [assignment[1] for assignment in idAssignments]
+            
             # Write the result as the assignment of agents and boxes of this color
             self.agentBoxAssignments[color] = idAssignments
+            
+        
+        for color in self.goalBoxAssignments:
+            self.goalBoxAssignments[color] = [assignment for assignment in self.goalBoxAssignments[color] if assignment[1] in boxIdsWithAgents]
+        
+        
+        print('\nASSIGNMENTS', file=sys.stderr, flush=True)
+        print('GOAL-BOX ASSIGNMENTS', file=sys.stderr, flush=True)
+        print(self.goalBoxAssignments, file=sys.stderr, flush=True)
+        print('AGENT_BOX ASSIGNMENTS', file=sys.stderr, flush=True)
+        print(self.agentBoxAssignments, file=sys.stderr, flush=True)
         
 
     def real_dist(self, state: 'State') -> 'int':
@@ -316,6 +370,10 @@ class Heuristic(metaclass=ABCMeta):
         # TO DO: Check if any new box has been pushed to the goal, then
         # reallocate.
         # self.resetAssignments(state)
+        
+        # A boolean denoting whether to reassign boxes at the end of the
+        # heuristic calculation, or not
+        doResetAssignments = False
         
         # A weight denoting the importance of box-goal distances over agent-box
         # distances,
@@ -327,17 +385,29 @@ class Heuristic(metaclass=ABCMeta):
         # For each letter...
         for letter in self.goalBoxAssignments:
             goalBoxAss = self.goalBoxAssignments[letter]
-            goalDists = self.goalDistances[letter]
+            goalDists = self.goalDistancesByLetter[letter]
 
             # Get every GOAL-BOX assignment
             for i in range(len(goalBoxAss)):
                 
-                # Get the coordinates of the box in the assignment, and
+                # Get the coordinates of thttps://mail.google.com/he box in the assignment, and
                 # look up its distance from its corresponding goal
                 boxCoordsCurrent = next(box for box in state.boxes if box.id == goalBoxAss[i][1]).coords
+                goalBoxDist = goalDists[i][boxCoordsCurrent[0]][boxCoordsCurrent[1]] * goalBoxMultiplier
+                
+                # If box is in goal, do not assign it again at later stages
+                if goalBoxDist < 1:
+                    self.boxIdsInGoal.add(goalBoxAss[i][1])
+                    self.goalIdsCompleted.add(goalBoxAss[i][0])
+                    if not (len(self.boxIdsInGoal) % 2):
+                        doResetAssignments = True
+                        
+                print('GOAL-BOX ASSIGNMENT', file=sys.stderr, flush=True)
+                print(goalBoxAss[i], file=sys.stderr, flush=True)
+                print(goalBoxDist, file=sys.stderr, flush=True)
                 
                 # Add it to the total distance
-                totalDist += (goalDists[i][boxCoordsCurrent[0]][boxCoordsCurrent[1]] * goalBoxMultiplier)
+                totalDist += goalBoxDist
             
         # For each color...
         for color in self.agentBoxAssignments:
@@ -354,8 +424,22 @@ class Heuristic(metaclass=ABCMeta):
                 
                 # Calculate distance between agent and box, and add it to the
                 # total distance
-                totalDist += Heuristic.get_distance(State.walls, agentCoordsCurrent, boxCoordsCurrent)
+                
+                dist = Heuristic.get_distance(State.walls, agentCoordsCurrent, boxCoordsCurrent)
+                print('AGENT-BOX ASSIGNMENT', file=sys.stderr, flush=True)
+                print(assignment, file=sys.stderr, flush=True)
+                print(dist, file=sys.stderr, flush=True)
+                
+                
+                totalDist += dist
             
+        if doResetAssignments:
+            self.resetAssignments(state)
+            
+        print(totalDist, file=sys.stderr, flush=True)
+        
+        print(state, file=sys.stderr, flush=True)
+        
         # Done.                         ...Done?
         return totalDist
         
