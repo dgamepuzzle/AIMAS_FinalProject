@@ -17,6 +17,8 @@ class Heuristic(metaclass=ABCMeta):
         #               - "C" : [[distances from goal 4]] etc...
         self.goalDistancesByLetter = defaultdict(list)
         
+        # Store the references of the above goal distance arrays in a
+        # flat array for easier searchhing
         self.goalDistances = []
         
         # Stores corresponding goal coordinates.
@@ -196,7 +198,7 @@ class Heuristic(metaclass=ABCMeta):
                 candidate = (x, y, current[2]+1)
                 cand_check = (x, y)
                 
-                if cand_check not in visited:
+                if cand_check not in visited and candidate not in frontier:
                     frontier.append(candidate)
                 
             visited.add((current[0], current[1]))
@@ -204,8 +206,6 @@ class Heuristic(metaclass=ABCMeta):
         return distances
     
     def resetAssignments(self, state: 'State'):
-        
-        print('R E A S S I G N M E N T', file=sys.stderr, flush=True)
         
         # TO DO: HANDLE CASE WHEN THERE ARE LESS AGENTS THAN BOXES TO BE PUSHED
         # Allocates one distinct box to each of the goal and
@@ -274,19 +274,8 @@ class Heuristic(metaclass=ABCMeta):
             # numbers in the DISTANCE MATRIX
             assignments = hungarian(distMatrix)
             
-            #print('STUFF', file=sys.stderr, flush=True)
-            #print(distMatrix, file=sys.stderr, flush=True)
-            #print(assignments, file=sys.stderr, flush=True)
-            #print('GOALIDs', file=sys.stderr, flush=True)
-            #print(goalIds[letter], file=sys.stderr, flush=True)
-            #print('BOXIDs', file=sys.stderr, flush=True)
-            #print(boxIds[letter], file=sys.stderr, flush=True)
-            
             # Get the real IDs of the assigned goals and boxes
             idAssignments = [(goalIds[letter][assignment[0]], boxIds[letter][assignment[1]]) for assignment in assignments]
-
-            #print('GOALBOXASSG', file=sys.stderr, flush=True)
-            #print(idAssignments, file=sys.stderr, flush=True)
             
             # Write the result as the assignment of boxes and goals of letter "letter".
             self.goalBoxAssignments[letter] = idAssignments
@@ -355,17 +344,9 @@ class Heuristic(metaclass=ABCMeta):
             
             # Write the result as the assignment of agents and boxes of this color
             self.agentBoxAssignments[color] = idAssignments
-            
         
-        for color in self.goalBoxAssignments:
+        for color in self.goalBoxAssignments:            
             self.goalBoxAssignments[color] = [assignment for assignment in self.goalBoxAssignments[color] if assignment[1] in boxIdsWithAgents]
-        
-        
-        #print('\nASSIGNMENTS', file=sys.stderr, flush=True)
-        #print('GOAL-BOX ASSIGNMENTS', file=sys.stderr, flush=True)
-        #print(self.goalBoxAssignments, file=sys.stderr, flush=True)
-        #print('AGENT_BOX ASSIGNMENTS', file=sys.stderr, flush=True)
-        #print(self.agentBoxAssignments, file=sys.stderr, flush=True)
         
 
     def real_dist(self, state: 'State') -> 'int':
@@ -382,19 +363,32 @@ class Heuristic(metaclass=ABCMeta):
         # distances,
         goalBoxMultiplier = 2
         
+        # A weight denoting the punishment given for pushing already completed
+        # boxes away from their goals
+        goalBoxCompletedMultiplier = 5
+        
         # The total distance
         totalDist = 0
         
+        # Get the list of previously completed boxes and goals
         boxIdsInGoal = list(self.boxIdsInGoal)
         goalIdsCompleted = list(self.goalIdsCompleted)
 
+        # Iterate through the previously completed box and goal IDs
         for i in range(len(self.boxIdsInGoal)):
             boxId = boxIdsInGoal[i]
             goalId = goalIdsCompleted[i]
+            # Find the corresponding coordinates of the given boxID
             boxCoordsCurrent = next(box for box in state.boxes if box.id == boxId).coords
+            
+            # Find the index belonging to the goal with the given goalID in
+            # tha flat goalDistances array
             goalIdx = next(j for j in range(len(state.goals)) if goalId == state.goals[j].id)
+            
+            # Given the above data, calculate the distance of the given
+            # goal box pair
             goalBoxDist = self.goalDistances[goalIdx][boxCoordsCurrent[0]][boxCoordsCurrent[1]]
-            totalDist += (goalBoxDist * 5)
+            totalDist += (goalBoxDist * goalBoxCompletedMultiplier)
         
         # For each letter...
         for letter in self.goalBoxAssignments:
@@ -414,12 +408,8 @@ class Heuristic(metaclass=ABCMeta):
                 if goalBoxDist < 1:
                     self.boxIdsInGoal.add(goalBoxAss[i][1])
                     self.goalIdsCompleted.add(goalBoxAss[i][0])
-                    if not (len(self.boxIdsInGoal) % 2):
+                    if not (len(self.boxIdsInGoal) % len(state.agents)):
                         doResetAssignments = True
-                        
-                #print('GOAL-BOX ASSIGNMENT', file=sys.stderr, flush=True)
-                #print(goalBoxAss[i], file=sys.stderr, flush=True)
-                #print(goalBoxDist, file=sys.stderr, flush=True)
                 
                 # Add it to the total distance
                 totalDist += goalBoxDist * goalBoxMultiplier
@@ -439,20 +429,14 @@ class Heuristic(metaclass=ABCMeta):
                 
                 # Calculate distance between agent and box, and add it to the
                 # total distance
-                
                 dist = Heuristic.get_distance(State.walls, agentCoordsCurrent, boxCoordsCurrent)
-                #print('AGENT-BOX ASSIGNMENT', file=sys.stderr, flush=True)
-                #print(assignment, file=sys.stderr, flush=True)
-                #print(dist, file=sys.stderr, flush=True)
-                
-                
                 totalDist += dist
-            
+        
+        # Reset goal-box box-agent assignments, if needed
         if doResetAssignments:
             self.resetAssignments(state)
             
         #print(totalDist, file=sys.stderr, flush=True)
-        
         print(state, file=sys.stderr, flush=True)
         
         # Done.                         ...Done?
