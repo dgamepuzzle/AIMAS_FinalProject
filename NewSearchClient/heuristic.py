@@ -35,15 +35,12 @@ class Heuristic(metaclass=ABCMeta):
         # in the same fashion as the above defaultdicts.
         self.goalBoxAssignments = defaultdict(list)
         
-        self.goalBoxAssignmentsAllTime = defaultdict(list)
-        
         # Stores pairs of goal and box ids that have been assigned
         # grouped by COLOR instead of letter
         self.agentBoxAssignments = defaultdict(list)
         
         # Keeps track of boxes that have been pushed to their goals
-        # UNUESED FOR NOW - FEATURE TO BE IMPLEMENTED
-        self.boxIdsInGoal = set()
+        self.boxIdsCompleted = set()
         
         # Keeps track of goals that have been completed
         self.goalIdsCompleted = set()
@@ -219,39 +216,39 @@ class Heuristic(metaclass=ABCMeta):
         
         # Create containers for box IDs and box coords, in a similar way as we
         # did with goals in the __init__ method
-        boxIds = defaultdict(list)
-        boxCoords= defaultdict(list)
+        boxIdsToBeCompleted = defaultdict(list)
+        boxCoordsToBeCompleted = defaultdict(list)   
+         
+        goalIdsToBeCompleted = defaultdict(list)
+        goalCoordsToBeCompleted = defaultdict(list)
+        goalDistancesToBeCompleted = defaultdict(list)
         
         for box in state.boxes:
             # Do not assign boxes already in goal
-            if box.id in self.boxIdsInGoal:
+            if box.id in self.boxIdsCompleted:
                 continue
             
-            boxIds[box.letter.lower()].append(box.id)
-            boxCoords[box.letter.lower()].append(box.coords)
-            
-        goalIds = defaultdict(list)
-        goalCoords = defaultdict(list)
-        goalDistances = defaultdict(list)
+            boxIdsToBeCompleted[box.letter.lower()].append(box.id)
+            boxCoordsToBeCompleted[box.letter.lower()].append(box.coords)
         
         for idx, goal in enumerate(state.goals):
             # Do not assign boxes already in goal
             if goal.id in self.goalIdsCompleted:
                 continue
             
-            goalIds[goal.letter.lower()].append(goal.id)
-            goalCoords[goal.letter.lower()].append(goal.coords)
-            goalDistances[goal.letter.lower()].append(self.goalDistances[idx])
+            goalIdsToBeCompleted[goal.letter.lower()].append(goal.id)
+            goalCoordsToBeCompleted[goal.letter.lower()].append(goal.coords)
+            goalDistancesToBeCompleted[goal.letter.lower()].append(self.goalDistances[idx])
             
         
         # DO IT FOR EACH GOAL/BOX LETTER
-        for letter in goalDistances:
+        for letter in goalIdsToBeCompleted:
             
             # Create shorthands for readable code (they're just references,
             # without extra memory consumption)
             
-            boxCoordsLetter = boxCoords[letter]
-            goalDistsLetter = goalDistances[letter]
+            boxCoordsLetter = boxCoordsToBeCompleted[letter]
+            goalDistsLetter = goalDistancesToBeCompleted[letter]
             
             box_cnt = len(boxCoordsLetter)
             goal_cnt = len(goalDistsLetter)
@@ -275,37 +272,38 @@ class Heuristic(metaclass=ABCMeta):
             assignments = hungarian(distMatrix)
             
             # Get the real IDs of the assigned goals and boxes
-            idAssignments = [(goalIds[letter][assignment[0]], boxIds[letter][assignment[1]]) for assignment in assignments]
+            idAssignments = [(goalIdsToBeCompleted[letter][assignment[0]], boxIdsToBeCompleted[letter][assignment[1]]) for assignment in assignments]
             
             # Write the result as the assignment of boxes and goals of letter "letter".
             self.goalBoxAssignments[letter] = idAssignments
-            self.goalBoxAssignmentsAllTime[letter] += idAssignments
             
         
         # AGENT - BOX ASSIGNMENT SECTION
         
         # Create containers for box and agent data, in a similar fashion as in
         # the above step, this time grouped by COLOR.
-        boxIds = defaultdict(list)
-        boxCoords= defaultdict(list)
+        
+        # For the AGENT-BOX assignments, use boxes only that have an associated
+        # goal.
+        boxIdsWithGoals = defaultdict(list)
+        boxCoordsWithGoals = defaultdict(list)
+        
         agentIds = defaultdict(list)
         agentCoords = defaultdict(list)
 
         # Work with boxes only if they have a corresponding goal
         # otherwise there's no point in pushing them with agents
         
-        # Create a container of assigned box ids, for easier lookup
-        assignedBoxIds = defaultdict(list)
         for letter in self.goalBoxAssignments:
-            assignedBoxIds[letter] = [assignment[1] for assignment in self.goalBoxAssignments[letter]]
+            boxIdsWithGoals[letter] = [assignment[1] for assignment in self.goalBoxAssignments[letter]]
         
         # If a box is not assigned to a goal, discard it
         # Group box data by color
         for box in state.boxes:
-            if box.id not in assignedBoxIds[box.letter.lower()]:
+            if box.id not in boxIdsWithGoals[box.letter.lower()]:
                 continue
-            boxIds[box.color].append(box.id)
-            boxCoords[box.color].append(box.coords)
+            boxIdsWithGoals[box.color].append(box.id)
+            boxCoordsWithGoals[box.color].append(box.coords)
         
         # Group agent data by color
         for agent in state.agents:
@@ -318,7 +316,7 @@ class Heuristic(metaclass=ABCMeta):
         for color in agentCoords:
             # Create shorthands for readable code (they're just references,
             # without extra memory consumption)
-            boxCoordsColor = boxCoords[color]
+            boxCoordsColor = boxCoordsWithGoals[color]
             agentCoordsColor = agentCoords[color]
             
             box_cnt = len(boxCoordsColor)
@@ -337,14 +335,15 @@ class Heuristic(metaclass=ABCMeta):
             assignments = hungarian(distMatrix)
             
             # Get the real IDs of the assigned agents and boxes
-            idAssignments = [(agentIds[color][assignment[0]], boxIds[color][assignment[1]]) for assignment in assignments]
+            idAssignments = [(agentIds[color][assignment[0]], boxIdsWithGoals[color][assignment[1]]) for assignment in assignments]
             
-            # DEBUG
+            # Collect the IDs of boxes that have an associated agent
             boxIdsWithAgents += [assignment[1] for assignment in idAssignments]
             
             # Write the result as the assignment of agents and boxes of this color
             self.agentBoxAssignments[color] = idAssignments
         
+        # Remove the GOAL_BOX assignments that have no associated agent.
         for color in self.goalBoxAssignments:            
             self.goalBoxAssignments[color] = [assignment for assignment in self.goalBoxAssignments[color] if assignment[1] in boxIdsWithAgents]
         
@@ -371,12 +370,12 @@ class Heuristic(metaclass=ABCMeta):
         totalDist = 0
         
         # Get the list of previously completed boxes and goals
-        boxIdsInGoal = list(self.boxIdsInGoal)
+        boxIdsCompleted = list(self.boxIdsCompleted)
         goalIdsCompleted = list(self.goalIdsCompleted)
 
         # Iterate through the previously completed box and goal IDs
-        for i in range(len(self.boxIdsInGoal)):
-            boxId = boxIdsInGoal[i]
+        for i in range(len(self.boxIdsCompleted)):
+            boxId = boxIdsCompleted[i]
             goalId = goalIdsCompleted[i]
             # Find the corresponding coordinates of the given boxID
             boxCoordsCurrent = next(box for box in state.boxes if box.id == boxId).coords
@@ -406,9 +405,9 @@ class Heuristic(metaclass=ABCMeta):
                 
                 # If box is in goal, do not assign it again at later stages
                 if goalBoxDist < 1:
-                    self.boxIdsInGoal.add(goalBoxAss[i][1])
+                    self.boxIdsCompleted.add(goalBoxAss[i][1])
                     self.goalIdsCompleted.add(goalBoxAss[i][0])
-                    if not (len(self.boxIdsInGoal) % len(state.agents)):
+                    if not (len(self.boxIdsCompleted) % len(state.agents)):
                         doResetAssignments = True
                 
                 # Add it to the total distance
