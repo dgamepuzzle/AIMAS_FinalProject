@@ -366,6 +366,9 @@ class Heuristic(metaclass=ABCMeta):
         # boxes away from their goals
         goalBoxCompletedMultiplier = 5
         
+        # A weight denoting the punishment of the movement of unassigne dagents
+        unassignedAgentMovementMultiplier = 2
+        
         # The total distance
         totalDist = 0
         
@@ -430,6 +433,24 @@ class Heuristic(metaclass=ABCMeta):
                 # total distance
                 dist = Heuristic.get_distance(State.walls, agentCoordsCurrent, boxCoordsCurrent)
                 totalDist += dist
+
+
+
+        # If there are unassigned agents, punish them for moving
+        # If there is previous state
+        if state.parent is not None:                
+            assignedAgentIds = set([assignment[0] for assignment in self.agentBoxAssignments])
+            
+            for i in range(len(state.agents)):
+                currentAgent = state.agents[i]
+                
+                pastAgent = state.parent.agents[i]
+                
+                if currentAgent.number not in assignedAgentIds:
+                    diffY = abs(currentAgent.coords[0] - pastAgent.coords[0])
+                    diffX = abs(currentAgent.coords[1] - pastAgent.coords[1])
+                    totalDist += (diffX + diffY) * unassignedAgentMovementMultiplier
+                
         
         # Reset goal-box box-agent assignments, if needed
         if doResetAssignments:
