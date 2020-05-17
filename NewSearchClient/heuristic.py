@@ -347,6 +347,11 @@ class Heuristic(metaclass=ABCMeta):
         for color in self.goalBoxAssignments:            
             self.goalBoxAssignments[color] = [assignment for assignment in self.goalBoxAssignments[color] if assignment[1] in boxIdsWithAgents]
         
+        print('GOAL-BOX', file=sys.stderr, flush=True)
+        print(self.goalBoxAssignments, file=sys.stderr, flush=True)
+        print('AGENT-BOX', file=sys.stderr, flush=True)
+        print(self.agentBoxAssignments, file=sys.stderr, flush=True)
+        
 
     def real_dist(self, state: 'State') -> 'int':
         
@@ -410,8 +415,10 @@ class Heuristic(metaclass=ABCMeta):
                 if goalBoxDist < 1:
                     self.boxIdsCompleted.add(goalBoxAss[i][1])
                     self.goalIdsCompleted.add(goalBoxAss[i][0])
-                    if not (len(self.boxIdsCompleted) % len(state.agents)):
-                        doResetAssignments = True
+                    #if not (len(self.boxIdsCompleted) % len(state.agents)):
+                        #print(goalBoxDist, file=sys.stderr, flush=True);
+                    doResetAssignments = True
+                    print(state, file=sys.stderr, flush=True)
                 
                 # Add it to the total distance
                 totalDist += goalBoxDist * goalBoxMultiplier
@@ -432,7 +439,7 @@ class Heuristic(metaclass=ABCMeta):
                 # Calculate distance between agent and box, and add it to the
                 # total distance
                 dist = Heuristic.get_distance(State.walls, agentCoordsCurrent, boxCoordsCurrent)
-                totalDist += dist
+                totalDist += (dist) # / len(self.agentBoxAssignments[color]))
 
 
 
@@ -457,7 +464,7 @@ class Heuristic(metaclass=ABCMeta):
             self.resetAssignments(state)
             
         #print(totalDist, file=sys.stderr, flush=True)
-        print(state, file=sys.stderr, flush=True)
+        #print(state, file=sys.stderr, flush=True)
         
         # Done.                         ...Done?
         return totalDist
