@@ -1,7 +1,7 @@
 #domain
 hospital
 #levelname
-MAD2
+MAD4
 #colors
 red: 0, 1, A
 #initial
@@ -18,6 +18,6 @@ red: 0, 1, A
 +              ++++
 +                 +
 +   ++         ++ +
-+   A+          +A+
++   A+    A     +A+
 +++++++++++++++++++
 #end
