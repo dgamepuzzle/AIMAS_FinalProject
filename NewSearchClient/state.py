@@ -10,7 +10,7 @@ import random
 import sys
 from itertools import product
 
-from graph import Graph, Node
+from graph import Graph
 from jointaction import Action, ActionType, ALL_ACTIONS
 from level_elements import Agent, Box, Goal
 
@@ -37,105 +37,64 @@ class State:
             State.walls = [[False for _ in range(State.MAX_COL)] for _ in range(State.MAX_ROW)]
             
             # Parse full level (build static graph and save static/non-static entities).
-            try:
-                for row, line in enumerate(level_lines):
-                    for col, char in enumerate(line):
+            #try:
+            for row, line in enumerate(level_lines):
+                for col, char in enumerate(line):
+                    
+                    if char != '+':
                         
-                        if char != '+':
+                        # First, as it's not a wall, add node to the static graph and create its relevant edges.
+                        cur_node = State.mainGraph.create_or_get_node(row, col)
+                        for coord in [(-1,0),(1,0),(0,1),(0,-1)]:
+                            k = coord[0]
+                            l = coord[1]
+                            h = min(State.MAX_ROW-1, max(0, row+k))
+                            u = min(State.MAX_COL-1, max(0, col+l))
+                            if level_lines[h][u]!='+':
+                                dest_node = State.mainGraph.create_or_get_node(h, u)
+                                cur_node.add_edge(dest_node)
+                                #mainGraph.add_edge(cur_node, dest_node, 1) # default distance = 1
+                                #print(str(cur_node) + " ->" + str(dest_node), file=sys.stderr, flush=True)
+                        
+                        # Parse agents.
+                        if char in "0123456789":
+                            color = State.colors[char]
+                            self.agents.append(Agent(char,color,(row, col)))
+                            #print("Saving agent at "+ str((row,col)), file=sys.stderr, flush=True)
                             
-                            # First, as it's not a wall, add node to the static graph.
-                            cur_node = State.mainGraph.create_or_get_node(row, col)
-                            
-                                
-                            for coord in [(-1,0),(1,0),(0,1),(0,-1)]:
-                                k = coord[0]
-                                l = coord[1]
-                                h = min(State.MAX_ROW-1, max(0, row+k))
-                                u = min(State.MAX_COL-1, max(0, col+l))
-                                if level_lines[h][u]!='+':
-                                    dest_node = State.mainGraph.create_or_get_node(h, u)
-                                    cur_node.add_edge(dest_node)
-                                    #mainGraph.add_edge(cur_node, dest_node, 1) # default distance = 1
-                                    #print(str(cur_node) + " ->" + str(dest_node), file=sys.stderr, flush=True)
-                            
-                            # Parse agents.
-                            if char in "0123456789":
-                                color = State.colors[char]
-                                self.agents.append(Agent(char,color,(row, col)))
-                                #print("Saving agent at "+ str((row,col)), file=sys.stderr, flush=True)
-                                
-                            # Parse boxes.
-                            elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                                color = State.colors[char]
-                                self.boxes.append(Box(char, color, (row, col)))
-                                if goal_state: #Parse goals
-                                    State.goals.append(Goal(char,(row, col)))
-                                    #print("adding goal at "+ str((row,col)), file=sys.stderr, flush=True)
-                            
-                            # Parse spaces.
-                            elif (char ==' '):
-                                # Do nothing after creating the node.
-                                pass
-                            
-                            else:
-                                print('Error, read invalid level character: {}'.format(char), file=sys.stderr, flush=True)
-                                sys.exit(1)
+                        # Parse boxes.
+                        elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                            color = State.colors[char]
+                            self.boxes.append(Box(char, color, (row, col)))
+                            if goal_state: #Parse goals
+                                State.goals.append(Goal(char,(row, col)))
+                                #print("adding goal at "+ str((row,col)), file=sys.stderr, flush=True)
+                        
+                        # Parse spaces.
+                        elif (char ==' '):
+                            # Do nothing after creating the node.
+                            pass
                         
                         else:
-                            # Save wall position.
-                            State.walls[row][col] = True
-                            pass
+                            print('Error, read invalid level character: {}'.format(char), file=sys.stderr, flush=True)
+                            sys.exit(1)
+                    
+                    else:
+                        # Save wall position.
+                        State.walls[row][col] = True
+                        pass
                         
                          
             
-            except Exception as ex:
+            '''except Exception as ex:
                 print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
-                sys.exit(1)
+                sys.exit(1)'''
               
               
             #create goal graph structures
             for goal in State.goals:
-                goal_graph = Graph()
-                for row, line in enumerate(level_lines):
-                        for col, char in enumerate(line):
-                            
-                            if char != '+':
-                                
-                                # First, as it's not a wall, add node to the static graph.
-                                cur_node = goal_graph.create_or_get_node(row, col)
-                                
-                                    
-                                for coord in [(-1,0),(1,0),(0,1),(0,-1)]:
-                                    k = coord[0]
-                                    l = coord[1]
-                                    h = min(State.MAX_ROW-1, max(0, row+k))
-                                    u = min(State.MAX_COL-1, max(0, col+l))
-                                    if level_lines[h][u]!='+':
-                                        dest_node = goal_graph.create_or_get_node(h, u)
-                                        cur_node.add_edge(dest_node)
-                                        #mainGraph.add_edge(cur_node, dest_node, 1) # default distance = 1
-                                        #print(str(cur_node) + " ->" + str(dest_node), file=sys.stderr, flush=True)
-                                        
-                goal_graph.create_goal_graph(goal.coords)
-                State.goalGraphs.append(goal_graph)
-                goal.distanceGraph = goal_graph
+                State.mainGraph.update_goal_distances(goal.coords, goal.id)
               
-            #Generate goal graphs
-            #deep copying does not work on big levels so I had to remove it, 
-            # I think we would need a custom deepcopy function or to use NetworkX
-# =============================================================================
-#             for goal in State.goals:
-#                 print("Copying", file=sys.stderr, flush=True) 
-#                 new_goal_state = cp.deepcopy(State.mainGraph)
-#                 
-# =============================================================================
-                
-                
-            #print(list(State.mainGraph.nodes)[0], file=sys.stderr, flush=True) 
-            #print(State.mainGraph, file=sys.stderr, flush=True)
-            
-            for goal in State.goals:
-                print(goal.distanceGraph, file=sys.stderr, flush=True)
            
         # Generate a state with info. from parent.
         else:

@@ -5,7 +5,6 @@ Created on Wed Apr 15 14:55:58 2020
 @author: AIStars group
 """
 
-from graph import Graph
 
 class Agent:
     
@@ -43,6 +42,7 @@ class Box:
         if self.letter != other.letter: return False
         if self.color != other.color: return False
         if self.coords != other.coords: return False
+        if self.id != other.id: return False
         return True
 
 class Goal:
@@ -53,7 +53,6 @@ class Goal:
         self.letter = letter
         self.coords = coords
         self.id = Goal.autoIncrement
-        self.distanceGraph = None; #will be set in the state class
         Goal.autoIncrement += 1
     
     def is_at(self, row, col):
@@ -63,5 +62,6 @@ class Goal:
         if not isinstance(other, Goal): return False
         if self.letter != other.letter: return False
         if self.coords != other.coords: return False
+        if self.id != other.id: return False
         return True
     

@@ -60,25 +60,11 @@ class Communicator:
             for i in line.split(","): colors[i]  = color 
         State.colors= colors
         
-        
         #save level to state
         State.MAX_ROW = len(init_state_text)
         State.MAX_COL = longest_line
         Communicator.starting_state = State(None, init_state_text)
-        '''
-        for row, line in enumerate(init_state_text):
-            for col, char in enumerate(line):
-                if (char == "+"):
-                    starting_state.walls[row][col] = True
-                elif (char in "0123456789"): starting_state.agents[str(row)+":"+str(col)] = char             
-                elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ": starting_state.boxes[str(row)+":"+str(col)] = char
-                elif char == ' ':
-                    # Free cell.
-                    pass
-                else:
-                    print('Error, read invalid level character: {}'.format(char), file=sys.stderr, flush=True)
-                    sys.exit(1)
-        '''
+        
         #save goal state
         Communicator.goal_state = State(None, goal_state_text, goal_state=True)
         '''

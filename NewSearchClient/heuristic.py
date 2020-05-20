@@ -15,11 +15,11 @@ class Heuristic(metaclass=ABCMeta):
         # goalDistances - "A" : [[distances from goal 1] , [distances from goal 2]]
         #               - "B" : [[distances from goal 3]]
         #               - "C" : [[distances from goal 4]] etc...
-        self.goalDistancesByLetter = defaultdict(list)
+        #self.goalDistancesByLetter = defaultdict(list)
         
         # Store the references of the above goal distance arrays in a
         # flat array for easier searchhing
-        self.goalDistances = []
+        #self.goalDistances = []
         
         # Stores corresponding goal coordinates.
         # goalCoords - "A" : [(coords of goal 1), (coords of goal2)]
@@ -47,10 +47,9 @@ class Heuristic(metaclass=ABCMeta):
         
         # Populate the above containers
         for goal in initial_state.goals:
-            distsFromGoal = Heuristic.gridBfs(initial_state.walls, goal.coords)
-            self.goalDistances.append(distsFromGoal)
-            self.goalDistancesByLetter[goal.letter.lower()].append(distsFromGoal)
-            
+            #distsFromGoal = Heuristic.gridBfs(initial_state.walls, goal.coords)
+            #self.goalDistances.append(distsFromGoal)
+            #self.goalDistancesByLetter[goal.letter.lower()].append(distsFromGoal)
             self.goalCoords[goal.letter.lower()].append(goal.coords)
             self.goalIds[goal.letter.lower()].append(goal.id)
         
@@ -61,146 +60,6 @@ class Heuristic(metaclass=ABCMeta):
         
         # Return the lowest possible step-distance based on assignments
         return self.real_dist(state)
-    
-    @staticmethod
-    def gridBfs(walls, startCoords):
-        
-        # TODO: USE THE GRAPH REPRESENTATION OF THE LEVEL INSTEAD
-        # A simple BFS that traverses the level defined by the 2d walls array
-        # and outputs a 2d array of the same size, filled with distances from
-        # a given point. Useful for precomputing distances from the goals
-        #
-        #   Input wall array                  Resulting array
-        #
-        #   wall     wall    start            0  0  0 (start)
-        #   notwall  notwall notwall          3  2  1
-        #   notwall  wall    notwall  ---->   4  0  2
-        #   notwall  wall    notwall          5  0  3
-        #
-        
-        rowCnt = len(walls)
-        colCnt = len(walls[0])
-        gridDistances = [[0 for j in range(colCnt)] for i in range(rowCnt)]
-        
-        start = (startCoords[0], startCoords[1], 0)
-        frontier = [start]
-        visited = set()
-        offsets = ((0, 1), (1, 0), (-1, 0), (0, -1))
-        
-        while len(frontier) > 0:
-            current = frontier.pop(0)
-            gridDistances[current[0]][current[1]] = current[2]            
-            for offset in offsets:
-                x = current[0] + offset[0]
-                y = current[1] + offset[1]                
-                if (x < 0) or (x >= rowCnt):
-                    continue
-                if (y < 0) or (y >= colCnt):
-                    continue            
-                if walls[x][y]:
-                    continue
-                candidate = (x, y, current[2]+1)
-                candidateCheck = (x, y)                
-                if candidateCheck not in visited:
-                    frontier.append(candidate)                
-            visited.add((current[0], current[1]))        
-        return gridDistances
-    
-    @staticmethod
-    def get_distance(walls, start_coords, end_coords):
-
-        # TODO: USE THE GRAPH REPRESENTATION OF THE LEVEL INSTEAD
-        # Calculate distance between start_coords and end_coords with
-        # a simple BFS. 
-        
-        row_cnt = len(walls)
-        col_cnt = len(walls[0])
-        
-        start = (start_coords[0], start_coords[1], 0)
-        frontier = [start]
-        visited = set()
-        offsets = ((0, 1), (1, 0), (-1, 0), (0, -1))
-        
-        while len(frontier) > 0:
-            current = frontier.pop(0)
-            
-            if current[0] == end_coords[0] and current[1] == end_coords[1]:
-                return current[2]
-            
-            for offset in offsets:
-                x = current[0] + offset[0]
-                y = current[1] + offset[1]
-                
-                if (x < 0) or (x > row_cnt):
-                    continue
-                if (y < 0) or (y > col_cnt):
-                    continue            
-                if walls[x][y]:
-                    continue
-                    
-                candidate = (x, y, current[2]+1)
-                cand_check = (x, y)
-                
-                if cand_check not in visited:
-                    frontier.append(candidate)
-                
-            visited.add((current[0], current[1]))
-        
-        return float('inf')
-    
-    @staticmethod
-    def get_distance_one_to_many(walls, start_coords, end_coords_array):
-        
-        # TODO: USE THE GRAPH REPRESENTATION OF THE LEVEL INSTEAD
-        # Calculates distances between the_coords of one start point and 
-        # many end points in a single graph traversal. Much more efficient than
-        # running BFS for each of the end points.
-        #
-        # Returns an array representing the distances from the start point to
-        # each of the end points, in a corresponding order as in the 
-        # end_coords_array.
-        
-        row_cnt = len(walls)
-        col_cnt = len(walls[0])
-    
-        distances = [float('inf') for i in range(len(end_coords_array))]
-        cnt_found = 0
-        
-        start = (start_coords[0], start_coords[1], 0)
-        frontier = [start]
-        visited = set()
-        offsets = ((0, 1), (1, 0), (-1, 0), (0, -1))
-        
-        while len(frontier) > 0:
-            current = frontier.pop(0)
-            
-            if current[0:2] in end_coords_array:
-                end_coord_idx = end_coords_array.index(current[0:2])
-                distances[end_coord_idx] = current[2]
-                cnt_found += 1
-                if cnt_found >= len(end_coords_array):
-                    return distances
-            
-            for offset in offsets:
-                x = current[0] + offset[0]
-                y = current[1] + offset[1]
-                
-                if (x < 0) or (x > row_cnt):
-                    continue
-                if (y < 0) or (y > col_cnt):
-                    continue            
-                if walls[x][y]:
-                    continue
-                    
-                candidate = (x, y, current[2]+1)
-                cand_check = (x, y)
-                
-                if cand_check not in visited and candidate not in frontier:
-                    frontier.append(candidate)
-                
-            visited.add((current[0], current[1]))
-        
-        return distances
     
     def resetAssignments(self, state: 'State'):
         
@@ -326,7 +185,7 @@ class Heuristic(metaclass=ABCMeta):
             # agent1    1    5    3
             # agent2    8    7    5
             # agent3    2    10   7
-            distMatrix = [Heuristic.get_distance_one_to_many(State.walls, agentCoord, boxCoordsColor) for agentCoord in agentCoordsColor]
+            distMatrix = [state.mainGraph.get_distance_one_to_many(agentCoord, boxCoordsColor) for agentCoord in agentCoordsColor]
             
             # Get assignments in a 
             # [(agentX, boxY), (agentY, boxZ), (agentZ, boxX)] format
@@ -438,7 +297,7 @@ class Heuristic(metaclass=ABCMeta):
                 
                 # Calculate distance between agent and box, and add it to the
                 # total distance
-                dist = Heuristic.get_distance(State.walls, agentCoordsCurrent, boxCoordsCurrent)
+                dist = state.mainGraph.get_distance(agentCoordsCurrent, boxCoordsCurrent)
                 totalDist += (dist) # / len(self.agentBoxAssignments[color]))
 
 
