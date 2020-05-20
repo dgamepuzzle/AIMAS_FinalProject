@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 import sys
 from state import State
-
+import time
 from hungarian import hungarian
 
 class Heuristic(metaclass=ABCMeta):
@@ -446,7 +446,14 @@ class Heuristic(metaclass=ABCMeta):
         # If there are unassigned agents, punish them for moving
         # If there is previous state
         if state.parent is not None:                
-            assignedAgentIds = set([assignment[0] for assignment in self.agentBoxAssignments])
+            #print("agentBoxAssignments " + str(self.agentBoxAssignments), file=sys.stderr, flush=True)
+            agentBoxAssignmentsValues = self.agentBoxAssignments.values()
+            assignedAgentIds =set()
+            for color in agentBoxAssignmentsValues:
+                for agentid in color:
+                    assignedAgentIds.add( agentid[0])
+            
+            #print("assigned agents+ " + str(assignedAgentIds), file=sys.stderr, flush=True)
             
             for i in range(len(state.agents)):
                 currentAgent = state.agents[i]
@@ -455,17 +462,19 @@ class Heuristic(metaclass=ABCMeta):
                 
                 if currentAgent.number not in assignedAgentIds:
                     diffY = abs(currentAgent.coords[0] - pastAgent.coords[0])
-                    diffX = abs(currentAgent.coords[1] - pastAgent.coords[1])
+                    diffX = abs(currentAgent.coords[1] - pastAgent.coords[1])       
+                    print("punishment: "+ "agent "+ str(currentAgent.number)+" is punished by: "+str((diffX + diffY) * unassignedAgentMovementMultiplier), file=sys.stderr, flush=True)
                     totalDist += (diffX + diffY) * unassignedAgentMovementMultiplier
                 
         
         # Reset goal-box box-agent assignments, if needed
         if doResetAssignments:
             self.resetAssignments(state)
-            
-        #print(totalDist, file=sys.stderr, flush=True)
-        #print(state, file=sys.stderr, flush=True)
+         
         
+        print("totalDist: "+ str(totalDist), file=sys.stderr, flush=True)
+        print(state, file=sys.stderr, flush=True)
+        #time.sleep(0.5)    
         # Done.                         ...Done?
         return totalDist
         
