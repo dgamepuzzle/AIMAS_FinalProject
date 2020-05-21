@@ -327,7 +327,7 @@ class Heuristic(metaclass=ABCMeta):
                 if currentAgent.number not in assignedAgentIds:
                     diffY = abs(currentAgent.coords[0] - pastAgent.coords[0])
                     diffX = abs(currentAgent.coords[1] - pastAgent.coords[1])       
-                    print("punishment: "+ "agent "+ str(currentAgent.number)+" is punished by: "+str((diffX + diffY) * unassignedAgentMovementMultiplier), file=sys.stderr, flush=True)
+                    #print("punishment: "+ "agent "+ str(currentAgent.number)+" is punished by: "+str((diffX + diffY) * unassignedAgentMovementMultiplier), file=sys.stderr, flush=True)
                     totalDist += (diffX + diffY) * unassignedAgentMovementMultiplier
                 
                 
@@ -358,8 +358,8 @@ class Heuristic(metaclass=ABCMeta):
             self.resetAssignments(state)
          
         
-        print("totalDist: "+ str(totalDist), file=sys.stderr, flush=True)
-        print(state, file=sys.stderr, flush=True)
+        #print("totalDist: "+ str(totalDist), file=sys.stderr, flush=True)
+        #print(state, file=sys.stderr, flush=True)
         #time.sleep(0.5)    
         # Done.                         ...Done?
         return totalDist

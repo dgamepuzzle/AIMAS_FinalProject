@@ -5,8 +5,8 @@ Created on Sat Apr 11 17:18:04 2020
 @author: AIStars group
 """
 
+import time
 import sys
-
 import configuration as config
 from heuristic import AStar, WAStar, Greedy
 from strategy import StrategyBFS, StrategyDFS, StrategyBestFirst
@@ -67,7 +67,7 @@ class Plan:
                 print(str(s), file=sys.stderr, flush=True)
             leaf = strategy.get_and_remove_leaf()
             #print(str(leaf.jointaction), file=sys.stderr, flush=True)
-            
+            time.sleep(0.5)
             # Check if the current state corresponds to a goal state. If True return the current plan.
             if leaf.is_goal_state():
                 print('found goal', file=sys.stderr, flush=True)
