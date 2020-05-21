@@ -104,6 +104,11 @@ class State:
                             # Save wall position.
                             State.walls[row][col] = True
                             
+                # Pre-compute distances between all nodes in the graph
+                print('Pre-computing distances for the level...', file=sys.stderr, flush=True)
+                State.mainGraph.compute_distances()
+                print('Pre-computing of distances finished succesfully!', file=sys.stderr, flush=True)
+                            
                 for goal in State.goals:
                     
                     distsFromGoal = State.mainGraph.gridForGoal(State.walls, goal.coords)
@@ -111,8 +116,7 @@ class State:
                     State.goalDistancesByLetter[goal.letter.lower()].append(distsFromGoal)
                     State.goalCoords[goal.letter.lower()].append(goal.coords)
                     State.goalIds[goal.letter.lower()].append(goal.id)
-                    
-                    print(distsFromGoal, file=sys.stderr, flush=True)
+                
             except Exception as ex:
                 print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
                 sys.exit(1)
