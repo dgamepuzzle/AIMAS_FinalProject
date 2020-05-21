@@ -60,9 +60,13 @@ class Plan:
             if strategy.frontier_empty():
                 return None
             
-            # Take next state (leaf) from the frontier.
+            # Take next state (leaf) from the frontier.     
+            print("---top 3 in queue---", file=sys.stderr, flush=True)
+            for i in range(3):
+                s = strategy.frontier.peek(i)
+                
+                print(str(s), file=sys.stderr, flush=True)
             leaf = strategy.get_and_remove_leaf()
-            #print(str(leaf), file=sys.stderr, flush=True)
             #print(str(leaf.jointaction), file=sys.stderr, flush=True)
             
             # Check if the current state corresponds to a goal state. If True return the current plan.

@@ -176,3 +176,13 @@ class PriorityQueue(object):
         item = self.queue[0] 
         del self.queue[0] 
         return item 
+    
+    #look at item at index i
+    def peek(self, i): 
+        
+        if self.length() <=i:
+            return "Queue does not have "+ str(i)+ " elements"
+        else:
+            s = self.queue[i]
+            print("h value: "+str(s.h), file=sys.stderr, flush=True)
+            return s
