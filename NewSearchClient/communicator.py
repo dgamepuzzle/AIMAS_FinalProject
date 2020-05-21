@@ -64,6 +64,11 @@ class Communicator:
         #save goal state
         Communicator.goal_state = State(None, goal_state_text, goal_state=True)
         
+        # Pre-compute distances between all nodes in the graph
+        print('Pre-computing distances for the level...', file=sys.stderr, flush=True)
+        Communicator.starting_state.mainGraph.compute_distances()
+        print('Pre-computing of distances finished succesfully!', file=sys.stderr, flush=True)
+        
         
     def send_commands_to_server(self, commands):
         # Read server messages from stdin.

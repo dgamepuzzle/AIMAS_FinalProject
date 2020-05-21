@@ -82,9 +82,6 @@ class State:
                             # Save wall position.
                             State.walls[row][col] = True
                             pass
-                            
-                # Pre-compute distances between all nodes in the graph
-                State.mainGraph.compute_distances()             
             
             except Exception as ex:
                 print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
