@@ -13,6 +13,7 @@ from itertools import product
 from graph import Graph
 from jointaction import Action, ActionType, ALL_ACTIONS
 from level_elements import Agent, Box, Goal
+from collections import defaultdict
 
 class State:
     _RNG = random.Random(1)
@@ -21,11 +22,32 @@ class State:
     goals = []
     colors = []
     walls = []
+    goalDistancesByLetter = defaultdict(list)
+    goalDistances = []                              # Store the references of the above goal distance arrays in a
+                                                    # flat array for easier searchhing
+    
+    goalCoords = defaultdict(list)                  # Stores corresponding goal coordinates.
+                                                    # goalCoords - "A" : [(coords of goal 1), (coords of goal2)]
+                                                    #            - "B" : [(coords of goal 3)]
+                                                    #            - "C" : [(coords of goal 4)] etc...
+    
+    goalIds = defaultdict(list)                     # Stores corresponding goal Ids in the same fashion as the
+                                                    # above defaultdicts.
     
     mainGraph = Graph()
     
     def __init__(self, copy: 'State' = None, level_lines = "", goal_state = False):
         self._hash = None
+        
+        self.goalBoxAssignments = defaultdict(list)         # Stores pairs of goal and box ids that have been assigned
+                                                            # in the same fashion as the above defaultdicts.
+                                                            
+        self.agentBoxAssignments = defaultdict(list)        # Stores pairs of goal and box ids that have been assigned
+                                                            # grouped by COLOR instead of letter
+                                                            
+        self.boxIdsCompleted = set()                        # Keeps track of boxes that have been pushed to their goals
+        self.goalIdsCompleted = set()                       # Keeps track of goals that have been completed
+        
         if copy == None:
             self.agents = []
             self.boxes = []
@@ -81,15 +103,23 @@ class State:
                         else:
                             # Save wall position.
                             State.walls[row][col] = True
-                            pass
                             
                 # Pre-compute distances between all nodes in the graph
-                State.mainGraph.compute_distances()             
-            
+                print('Pre-computing distances for the level...', file=sys.stderr, flush=True)
+                State.mainGraph.compute_distances()
+                print('Pre-computing of distances finished succesfully!', file=sys.stderr, flush=True)
+                            
+                for goal in State.goals:
+                    
+                    distsFromGoal = State.mainGraph.gridForGoal(State.walls, goal.coords)
+                    State.goalDistances.append(distsFromGoal)
+                    State.goalDistancesByLetter[goal.letter.lower()].append(distsFromGoal)
+                    State.goalCoords[goal.letter.lower()].append(goal.coords)
+                    State.goalIds[goal.letter.lower()].append(goal.id)
+                
             except Exception as ex:
                 print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
                 sys.exit(1)
-              
            
         # Generate a state with info. from parent.
         else:
@@ -97,6 +127,11 @@ class State:
             self.boxes = cp.deepcopy(copy.boxes)
             self.parent = copy.parent
             self.jointaction = cp.deepcopy(copy.jointaction)
+            
+            self.goalBoxAssignments = cp.deepcopy(copy.goalBoxAssignments)
+            self.agentBoxAssignments = cp.deepcopy(copy.agentBoxAssignments)   
+            self.boxIdsCompleted = cp.deepcopy(copy.boxIdsCompleted)
+            self.goalIdsCompleted = cp.deepcopy(copy.goalIdsCompleted)
             
             self.g = copy.g
             self.h = copy.h
@@ -128,6 +163,7 @@ class State:
             if child.update_positions():
                 child.parent = self
                 child.g += 1
+                
                 children.append(child)
         
         # Sort children states randomly.
