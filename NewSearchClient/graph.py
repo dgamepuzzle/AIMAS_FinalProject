@@ -56,6 +56,25 @@ class Graph:
                     queue.append(neighbor)
             node.explored = True
         self.reset_explored_flags()
+    
+    # Traverses the level defined by the 2d walls array
+    # and outputs a 2d array of the same size, filled with distances from
+    # a given point.
+    #
+    #   Input wall array                  Resulting array
+    #
+    #   wall     wall    start            0  0  0 (start)
+    #   notwall  notwall notwall          3  2  1
+    #   notwall  wall    notwall  ---->   4  0  2
+    #   notwall  wall    notwall          5  0  3
+    #
+    def gridForGoal(self, walls, startCoords):
+        rowCnt = len(walls)
+        colCnt = len(walls[0])
+        gridDistances = [[0 for j in range(colCnt)] for i in range(rowCnt)]
+        for node in self.nodes:
+            gridDistances[node.coords[0]][node.coords[1]] = node.distances[startCoords]
+        return gridDistances
         
     # Calculates distances between the_coords of one start point and 
     # many end points in a single graph traversal. Much more efficient than
@@ -66,26 +85,9 @@ class Graph:
     # end_coords_array.
     def get_distance_one_to_many(self, start_coords, end_coords_array):
         distances = [float('inf') for i in range(len(end_coords_array))]
-        dist = defaultdict()
-        cnt_found = 0
         start = self.contains_node(start_coords[0],start_coords[1])
-        queue = deque()
-        queue.append(start)
-        dist[start.value] = 0
-        while queue:
-            node = queue.pop()
-            if (node.coords[0],node.coords[1]) in end_coords_array:
-                end_coord_idx = end_coords_array.index((node.coords[0],node.coords[1]))
-                distances[end_coord_idx] = dist[node.value]
-                cnt_found += 1
-                if cnt_found >= len(end_coords_array):
-                    return distances
-            for neighbor in node.edges:
-                if not neighbor.explored:
-                    dist[neighbor.value] = dist[node.value] + 1
-                    queue.append(neighbor)
-            node.explored = True
-        self.reset_explored_flags()
+        for idx, end_coords in enumerate(end_coords_array):
+            distances[idx] = start.distances[end_coords]
         return distances
     
     def reset_explored_flags(self):

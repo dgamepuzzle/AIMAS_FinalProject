@@ -23,7 +23,6 @@ class State:
     walls = []
     
     mainGraph = Graph()
-    goalGraphs = []
     
     def __init__(self, copy: 'State' = None, level_lines = "", goal_state = False):
         self._hash = None
@@ -37,59 +36,59 @@ class State:
             State.walls = [[False for _ in range(State.MAX_COL)] for _ in range(State.MAX_ROW)]
             
             # Parse full level (build static graph and save static/non-static entities).
-            #try:
-            for row, line in enumerate(level_lines):
-                for col, char in enumerate(line):
-                    
-                    if char != '+':
+            try:
+                for row, line in enumerate(level_lines):
+                    for col, char in enumerate(line):
                         
-                        # First, as it's not a wall, add node to the static graph and create its relevant edges.
-                        cur_node = State.mainGraph.create_or_get_node(row, col)
-                        for coord in [(-1,0),(1,0),(0,1),(0,-1)]:
-                            k = coord[0]
-                            l = coord[1]
-                            h = min(State.MAX_ROW-1, max(0, row+k))
-                            u = min(State.MAX_COL-1, max(0, col+l))
-                            if level_lines[h][u]!='+':
-                                dest_node = State.mainGraph.create_or_get_node(h, u)
-                                cur_node.add_edge(dest_node)
-                                #mainGraph.add_edge(cur_node, dest_node, 1) # default distance = 1
-                                #print(str(cur_node) + " ->" + str(dest_node), file=sys.stderr, flush=True)
-                        
-                        # Parse agents.
-                        if char in "0123456789":
-                            color = State.colors[char]
-                            self.agents.append(Agent(char,color,(row, col)))
-                            #print("Saving agent at "+ str((row,col)), file=sys.stderr, flush=True)
+                        if char != '+':
                             
-                        # Parse boxes.
-                        elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                            color = State.colors[char]
-                            self.boxes.append(Box(char, color, (row, col)))
-                            if goal_state: #Parse goals
-                                State.goals.append(Goal(char,(row, col)))
-                                #print("adding goal at "+ str((row,col)), file=sys.stderr, flush=True)
-                        
-                        # Parse spaces.
-                        elif (char ==' '):
-                            # Do nothing after creating the node.
-                            pass
+                            # First, as it's not a wall, add node to the static graph and create its relevant edges.
+                            cur_node = State.mainGraph.create_or_get_node(row, col)
+                            for coord in [(-1,0),(1,0),(0,1),(0,-1)]:
+                                k = coord[0]
+                                l = coord[1]
+                                h = min(State.MAX_ROW-1, max(0, row+k))
+                                u = min(State.MAX_COL-1, max(0, col+l))
+                                if level_lines[h][u]!='+':
+                                    dest_node = State.mainGraph.create_or_get_node(h, u)
+                                    cur_node.add_edge(dest_node)
+                                    #mainGraph.add_edge(cur_node, dest_node, 1) # default distance = 1
+                                    #print(str(cur_node) + " ->" + str(dest_node), file=sys.stderr, flush=True)
+                            
+                            # Parse agents.
+                            if char in "0123456789":
+                                color = State.colors[char]
+                                self.agents.append(Agent(char,color,(row, col)))
+                                #print("Saving agent at "+ str((row,col)), file=sys.stderr, flush=True)
+                                
+                            # Parse boxes.
+                            elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                                color = State.colors[char]
+                                self.boxes.append(Box(char, color, (row, col)))
+                                if goal_state: #Parse goals
+                                    State.goals.append(Goal(char,(row, col)))
+                                    #print("adding goal at "+ str((row,col)), file=sys.stderr, flush=True)
+                            
+                            # Parse spaces.
+                            elif (char ==' '):
+                                # Do nothing after creating the node.
+                                pass
+                            
+                            else:
+                                print('Error, read invalid level character: {}'.format(char), file=sys.stderr, flush=True)
+                                sys.exit(1)
                         
                         else:
-                            print('Error, read invalid level character: {}'.format(char), file=sys.stderr, flush=True)
-                            sys.exit(1)
-                    
-                    else:
-                        # Save wall position.
-                        State.walls[row][col] = True
-                        pass
-                        
-            # Pre-compute distances between all nodes in the graph
-            State.mainGraph.compute_distances()             
+                            # Save wall position.
+                            State.walls[row][col] = True
+                            pass
+                            
+                # Pre-compute distances between all nodes in the graph
+                State.mainGraph.compute_distances()             
             
-            '''except Exception as ex:
+            except Exception as ex:
                 print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
-                sys.exit(1)'''
+                sys.exit(1)
               
            
         # Generate a state with info. from parent.

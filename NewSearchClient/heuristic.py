@@ -10,16 +10,16 @@ class Heuristic(metaclass=ABCMeta):
         # Here's a chance to pre-process the static parts of the level.
         
         # Stores arrays of size (MAX_ROW, MAX_COL), denoting minimum push
-        # distances from each goal (might use graphs instead).
+        # distances from each goal.
         # The data is grouped by letters in the following way:
         # goalDistances - "A" : [[distances from goal 1] , [distances from goal 2]]
         #               - "B" : [[distances from goal 3]]
         #               - "C" : [[distances from goal 4]] etc...
-        #self.goalDistancesByLetter = defaultdict(list)
+        self.goalDistancesByLetter = defaultdict(list)
         
         # Store the references of the above goal distance arrays in a
         # flat array for easier searchhing
-        #self.goalDistances = []
+        self.goalDistances = []
         
         # Stores corresponding goal coordinates.
         # goalCoords - "A" : [(coords of goal 1), (coords of goal2)]
@@ -48,8 +48,9 @@ class Heuristic(metaclass=ABCMeta):
         # Populate the above containers
         for goal in initial_state.goals:
             #distsFromGoal = Heuristic.gridBfs(initial_state.walls, goal.coords)
-            #self.goalDistances.append(distsFromGoal)
-            #self.goalDistancesByLetter[goal.letter.lower()].append(distsFromGoal)
+            distsFromGoal = initial_state.mainGraph.gridForGoal(initial_state.walls, goal.coords)
+            self.goalDistances.append(distsFromGoal)
+            self.goalDistancesByLetter[goal.letter.lower()].append(distsFromGoal)
             self.goalCoords[goal.letter.lower()].append(goal.coords)
             self.goalIds[goal.letter.lower()].append(goal.id)
         
