@@ -2,7 +2,6 @@ from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 import sys
 from state import State
-import time
 from hungarian import hungarian
 
 class Heuristic(metaclass=ABCMeta):
@@ -47,7 +46,6 @@ class Heuristic(metaclass=ABCMeta):
         
         # Populate the above containers
         for goal in initial_state.goals:
-            #distsFromGoal = Heuristic.gridBfs(initial_state.walls, goal.coords)
             distsFromGoal = initial_state.mainGraph.gridForGoal(initial_state.walls, goal.coords)
             self.goalDistances.append(distsFromGoal)
             self.goalDistancesByLetter[goal.letter.lower()].append(distsFromGoal)
@@ -58,7 +56,6 @@ class Heuristic(metaclass=ABCMeta):
         self.resetAssignments(initial_state)
     
     def h(self, state: 'State') -> 'int':
-        
         # Return the lowest possible step-distance based on assignments
         return self.real_dist(state)
     
@@ -249,6 +246,7 @@ class Heuristic(metaclass=ABCMeta):
         for i in range(len(self.boxIdsCompleted)):
             boxId = boxIdsCompleted[i]
             goalId = goalIdsCompleted[i]
+            
             # Find the corresponding coordinates of the given boxID
             boxCoordsCurrent = next(box for box in state.boxes if box.id == boxId).coords
             
@@ -268,7 +266,7 @@ class Heuristic(metaclass=ABCMeta):
             # Get every GOAL-BOX assignment
             for i in range(len(goalBoxAss)):
                 
-                # Get the coordinates of thttps://mail.google.com/he box in the assignment, and
+                # Get the coordinates of the box in the assignment, and
                 # look up its distance from its corresponding goal
                 boxCoordsCurrent = next(box for box in state.boxes if box.id == goalBoxAss[i][1]).coords
                 goalId = goalBoxAss[i][0]
