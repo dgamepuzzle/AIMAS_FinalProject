@@ -90,7 +90,10 @@ class Graph:
         distances = [float('inf') for i in range(len(end_coords_array))]
         start = self.contains_node(start_coords[0],start_coords[1])
         for idx, end_coords in enumerate(end_coords_array):
-            distances[idx] = start.distances[end_coords]
+            try:
+                distances[idx] = start.distances[end_coords]
+            except:
+                distances[idx] = float('inf')
         return distances
     
     def reset_explored_flags(self):
