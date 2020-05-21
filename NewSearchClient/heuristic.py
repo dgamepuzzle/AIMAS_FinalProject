@@ -234,6 +234,10 @@ class Heuristic(metaclass=ABCMeta):
         # A weight denoting the punishment of the movement of unassigne dagents
         unassignedAgentMovementMultiplier = 2
         
+        # A weight denoting the punishment of having unassigned and non-
+        # completed boxes in the level
+        loneBoxMultiplier = 1000
+        
         # The total distance
         totalDist = 0
         
@@ -325,6 +329,28 @@ class Heuristic(metaclass=ABCMeta):
                     diffX = abs(currentAgent.coords[1] - pastAgent.coords[1])       
                     print("punishment: "+ "agent "+ str(currentAgent.number)+" is punished by: "+str((diffX + diffY) * unassignedAgentMovementMultiplier), file=sys.stderr, flush=True)
                     totalDist += (diffX + diffY) * unassignedAgentMovementMultiplier
+                
+                
+        # Punish boxes that are unassigned and are not yet in their goals
+        boxIdsToBePunished = set([box.id for box in state.boxes])
+        
+        # Exclude boxes that have a corresponding agent
+        for color in self.agentBoxAssignments:
+            for assignment in self.agentBoxAssignments[color]:
+                boxIdsToBePunished.remove(assignment[1])
+        
+        # Exclude boxes already in goal
+        for boxId in self.boxIdsCompleted:
+            try:
+                boxIdsToBePunished.remove(boxId)
+            except:
+                # Apparently, there are cases when a box has been just pushed
+                # to its goal, but it's still assigned to its agent
+                # If this happens, we try to remove the box two times from the
+                # set, which raises an error
+                print('Erm, error handling...', file=sys.stderr, flush=True)
+            
+        totalDist += (len(boxIdsToBePunished) * loneBoxMultiplier)
                 
         
         # Reset goal-box box-agent assignments, if needed
