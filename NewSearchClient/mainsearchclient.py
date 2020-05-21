@@ -1,6 +1,5 @@
 import argparse
 import pandas as pd
-#import re
 import sys
 
 import configuration
@@ -78,7 +77,6 @@ if __name__ == '__main__':
         df = None
     
     # Run client.
-
     df = main(args.strategy, df)
     
     # Save CSV file

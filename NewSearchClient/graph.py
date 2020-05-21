@@ -73,7 +73,10 @@ class Graph:
         colCnt = len(walls[0])
         gridDistances = [[0 for j in range(colCnt)] for i in range(rowCnt)]
         for node in self.nodes:
-            gridDistances[node.coords[0]][node.coords[1]] = node.distances[startCoords]
+            try:
+                gridDistances[node.coords[0]][node.coords[1]] = node.distances[startCoords]
+            except:
+                gridDistances[node.coords[0]][node.coords[1]] = 0
         return gridDistances
         
     # Calculates distances between the_coords of one start point and 
