@@ -6,7 +6,6 @@ Created on Sat Apr 11 17:18:04 2020
 """
 
 import sys
-#import time
 
 import configuration as config
 from heuristic import AStar, WAStar, Greedy
