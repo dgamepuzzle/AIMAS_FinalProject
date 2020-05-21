@@ -204,10 +204,10 @@ class Heuristic(metaclass=ABCMeta):
         for color in self.goalBoxAssignments:            
             self.goalBoxAssignments[color] = [assignment for assignment in self.goalBoxAssignments[color] if assignment[1] in boxIdsWithAgents]
         
-        print('GOAL-BOX', file=sys.stderr, flush=True)
+        '''print('GOAL-BOX', file=sys.stderr, flush=True)
         print(self.goalBoxAssignments, file=sys.stderr, flush=True)
         print('AGENT-BOX', file=sys.stderr, flush=True)
-        print(self.agentBoxAssignments, file=sys.stderr, flush=True)
+        print(self.agentBoxAssignments, file=sys.stderr, flush=True)'''
         
 
     def real_dist(self, state: 'State') -> 'int':
@@ -280,7 +280,7 @@ class Heuristic(metaclass=ABCMeta):
                     #if not (len(self.boxIdsCompleted) % len(state.agents)):
                         #print(goalBoxDist, file=sys.stderr, flush=True);
                     doResetAssignments = True
-                    print(state, file=sys.stderr, flush=True)
+                    #print(state, file=sys.stderr, flush=True)
                 
                 # Add it to the total distance
                 totalDist += goalBoxDist * goalBoxMultiplier
@@ -325,7 +325,7 @@ class Heuristic(metaclass=ABCMeta):
                 if currentAgent.number not in assignedAgentIds:
                     diffY = abs(currentAgent.coords[0] - pastAgent.coords[0])
                     diffX = abs(currentAgent.coords[1] - pastAgent.coords[1])       
-                    print("punishment: "+ "agent "+ str(currentAgent.number)+" is punished by: "+str((diffX + diffY) * unassignedAgentMovementMultiplier), file=sys.stderr, flush=True)
+                    #print("punishment: "+ "agent "+ str(currentAgent.number)+" is punished by: "+str((diffX + diffY) * unassignedAgentMovementMultiplier), file=sys.stderr, flush=True)
                     totalDist += (diffX + diffY) * unassignedAgentMovementMultiplier
                 
                 
@@ -356,8 +356,8 @@ class Heuristic(metaclass=ABCMeta):
             self.resetAssignments(state)
          
         
-        print("totalDist: "+ str(totalDist), file=sys.stderr, flush=True)
-        print(state, file=sys.stderr, flush=True)
+        #print("totalDist: "+ str(totalDist), file=sys.stderr, flush=True)
+        #print(state, file=sys.stderr, flush=True)
         #time.sleep(0.5)    
         # Done.                         ...Done?
         return totalDist

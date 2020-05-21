@@ -184,5 +184,5 @@ class PriorityQueue(object):
             return "Queue does not have "+ str(i)+ " elements"
         else:
             s = self.queue[i]
-            print("h value: "+str(s.h), file=sys.stderr, flush=True)
+            #print("h value: "+str(s.h), file=sys.stderr, flush=True)
             return s

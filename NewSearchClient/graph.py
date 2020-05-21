@@ -35,7 +35,7 @@ class Graph:
             nodeA = self.contains_node(coordsA[0],coordsA[1])
             return nodeA.distances[coordsB[0],coordsB[1]]
         except:
-            print("Couldn't compute the distance to "+str(coordsB), file=sys.stderr, flush=True)
+            #print("Couldn't compute the distance to "+str(coordsB), file=sys.stderr, flush=True)
             return float('inf')
     
     def compute_distances(self):

@@ -44,7 +44,7 @@ class Communicator:
             elif (current_command =="#goal"):
                 goal_state_text.append(line)
             else:
-                print("couldn't recognise command", file=sys.stderr, flush=True)
+                print("Couldn't recognise command", file=sys.stderr, flush=True)
             
             line = server_messages.readline().rstrip()
             
@@ -73,13 +73,13 @@ class Communicator:
     def send_commands_to_server(self, commands):
         # Read server messages from stdin.
         server_messages = sys.stdin
-        print("Sending these commands to server:", file=sys.stderr, flush=True)   
+        #print("Sending these commands to server:", file=sys.stderr, flush=True)   
         for state in commands:
             msg =''
             for action in state.jointaction:
                 msg += str(action).replace('[','').replace(']','') + ";"
             msg = msg[:-1]
-            print(msg, file=sys.stdout, flush=True)    
+            #print(msg, file=sys.stdout, flush=True)    
             response = server_messages.readline().rstrip()
             if 'false' in response:
                 print('Server responsed with "{}" to the action "{}" applied in:\n{}\n'.format(response, msg, state.parent), file=sys.stderr, flush=True)
