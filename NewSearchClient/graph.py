@@ -31,27 +31,32 @@ class Graph:
         return node
     
     def get_distance(self, coordsA, coordsB):
-        nodeA = self.contains_node(coordsA[0],coordsA[1])
-        nodeB = self.contains_node(coordsB[0],coordsB[1])
-        distances = defaultdict()
+        try:
+            nodeA = self.contains_node(coordsA[0],coordsA[1])
+            return nodeA.distances[coordsB[0],coordsB[1]]
+        except:
+            print("Couldn't compute the distance to "+str(coordsB), file=sys.stderr, flush=True)
+            return float('inf')
+    
+    def compute_distances(self):
+        for node in self.nodes:
+            self.compute_distances_from_node(node.coords)
+    
+    def compute_distances_from_node(self, coords):
+        start = self.contains_node(coords[0],coords[1])
+        start.distances[coords] = 0
         queue = deque()
-        distances[nodeA.value] = 0
-        queue.append(nodeA)
+        queue.append(start)
         while queue:
             node = queue.pop()
-            dist = distances[node.value] + 1
+            dist = node.distances[coords] + 1
             for neighbor in node.edges:
                 if not neighbor.explored:
-                    if neighbor == nodeB:
-                        self.reset_explored_flags()
-                        return dist
-                    distances[neighbor.value] = dist
+                    neighbor.distances[coords] = dist
                     queue.append(neighbor)
             node.explored = True
         self.reset_explored_flags()
-        print("Couldn't compute the distance to "+str(coordsB), file=sys.stderr, flush=True)
-        return float('inf')
-    
+        
     # Calculates distances between the_coords of one start point and 
     # many end points in a single graph traversal. Much more efficient than
     # running BFS for each of the end points.
@@ -82,25 +87,6 @@ class Graph:
             node.explored = True
         self.reset_explored_flags()
         return distances
-    
-    def update_goal_distances(self, coords, goalId):
-        goal_node = self.contains_node(coords[0],coords[1])
-        goal_node.distancesToGoals[goalId] = 0
-        #print('Goal ' + str(goalId) + ' node: '+ str(goal_node), file=sys.stderr, flush=True)
-        self.compute_goal_distances(goal_node, goalId)
-        
-    def compute_goal_distances(self, origin, goalId):
-        queue = deque()
-        queue.append(origin)
-        while queue:
-            node = queue.pop()
-            dist = node.distancesToGoals[goalId] + 1
-            for neighbor in node.edges:
-                if not neighbor.explored:
-                    neighbor.distancesToGoals[goalId] = dist
-                    queue.append(neighbor)
-            node.explored = True
-        self.reset_explored_flags()
     
     def reset_explored_flags(self):
         for node in self.nodes:
@@ -134,7 +120,7 @@ class Node:
         self.value = self.coords2id(i,j)
         self.coords = (i, j)
         self.edges = set()
-        self.distancesToGoals = defaultdict()
+        self.distances = defaultdict()
         self.explored = False
       
     def add_edge(self, to_node):
@@ -176,4 +162,4 @@ class Node:
 # =============================================================================
     
     def __repr__(self):
-        return "Node at: " + str(self.id2coords(self.value)) + "with " + str(len(self.edges)) + " edges, and distances to goals " + str(self.distancesToGoals)
+        return "Node at: " + str(self.id2coords(self.value)) + "with " + str(len(self.edges)) + " edges"

@@ -84,16 +84,12 @@ class State:
                         State.walls[row][col] = True
                         pass
                         
-                         
+            # Pre-compute distances between all nodes in the graph
+            State.mainGraph.compute_distances()             
             
             '''except Exception as ex:
                 print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
                 sys.exit(1)'''
-              
-              
-            #create goal graph structures
-            for goal in State.goals:
-                State.mainGraph.update_goal_distances(goal.coords, goal.id)
               
            
         # Generate a state with info. from parent.
@@ -286,7 +282,6 @@ class State:
     
     def __hash__(self):
         if self._hash is None:
-            prime = 31
             _hash = 1
             '''
             _hash = _hash * prime + self.agent_row
