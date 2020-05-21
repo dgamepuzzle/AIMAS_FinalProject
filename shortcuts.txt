@@ -4,3 +4,11 @@ java -jar server.jar -c "py OldSearchClient\searchclient_python\searchclient\sea
 
 ##RUN A SIMPLE level (new client)##
 java -jar server.jar -c "py NewSearchClient\mainsearchclient.py -greedy" -l "MAExample.lvl" -g -s 100
+
+
+##RUN COMPETITION LEVELS (one strategy per execution)##
+java -jar server.jar -c "python NewSearchClient/mainsearchclient.py --max-memory 2048 -greedy" -l "complevels/" -t 180 -o "AIstars.zip"
+
+
+##WATCH CLIENT PERFORMANCE FROM LOGFILE##
+java -jar server.jar -r "AIstars/SAaiaioh.log" -g
