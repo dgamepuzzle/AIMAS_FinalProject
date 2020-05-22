@@ -27,8 +27,8 @@ def main(strategy_str: 'str', df: 'object'):
     
     # Solve the level (resolve the plan and get a path from initial state to goal state).
     commands = planner.resolve()
-    '''for command in commands:  
-        print(str(command.jointaction), file=sys.stderr, flush=True)'''
+    for command in commands:  
+        print(str(command.jointaction), file=sys.stderr, flush=True)
         
     # Write results in CSV file if needed
     if df is not None:

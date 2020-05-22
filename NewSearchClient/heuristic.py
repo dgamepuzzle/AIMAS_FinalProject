@@ -328,7 +328,6 @@ class Heuristic(metaclass=ABCMeta):
                     #print("punishment: "+ "agent "+ str(currentAgent.number)+" is punished by: "+str((diffX + diffY) * unassignedAgentMovementMultiplier), file=sys.stderr, flush=True)
                     totalDist += (diffX + diffY) * unassignedAgentMovementMultiplier
                 
-                
         # Punish boxes that are unassigned and are not yet in their goals
         boxIdsToBePunished = set([box.id for box in state.boxes])
         
@@ -349,7 +348,6 @@ class Heuristic(metaclass=ABCMeta):
                 print('Erm, error handling...', file=sys.stderr, flush=True)
             
         totalDist += (len(boxIdsToBePunished) * loneBoxMultiplier)
-                
         
         # Reset goal-box box-agent assignments, if needed
         if doResetAssignments:
