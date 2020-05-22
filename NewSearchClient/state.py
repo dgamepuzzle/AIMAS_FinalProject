@@ -105,10 +105,7 @@ class State:
                             State.walls[row][col] = True
                             
                 # Pre-compute distances between all nodes in the graph
-                print('Pre-computing distances for the level...', file=sys.stderr, flush=True)
                 State.mainGraph.compute_distances()
-                print('Pre-computing of distances finished succesfully!', file=sys.stderr, flush=True)
-                            
                 for goal in State.goals:
                     
                     distsFromGoal = State.mainGraph.gridForGoal(State.walls, goal.coords)

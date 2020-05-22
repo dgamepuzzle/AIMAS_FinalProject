@@ -188,7 +188,7 @@ class Heuristic(metaclass=ABCMeta):
         # boxes away from their goals
         goalBoxCompletedMultiplier = 5
         
-        # A weight denoting the punishment of the movement of unassigne dagents
+        # A weight denoting the punishment of the movement of unassigned agents
         unassignedAgentMovementMultiplier = 2
         
         # A weight denoting the punishment of having unassigned and non-
@@ -212,7 +212,7 @@ class Heuristic(metaclass=ABCMeta):
             boxCoordsCurrent = next(box for box in state.boxes if box.id == boxId).coords
             
             # Find the index belonging to the goal with the given goalID in
-            # tha flat goalDistances array
+            # the flat goalDistances array
             goalIdx = next(j for j in range(len(state.goals)) if goalId == state.goals[j].id)
             
             # Given the above data, calculate the distance of the given
