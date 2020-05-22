@@ -57,6 +57,8 @@ class State:
             self.h = -1
             State.walls = [[False for _ in range(State.MAX_COL)] for _ in range(State.MAX_ROW)]
             
+            self.debugDistances=[0]*5
+            
             # Parse full level (build static graph and save static/non-static entities).
             try:
                 for row, line in enumerate(level_lines):
@@ -132,6 +134,8 @@ class State:
             
             self.g = copy.g
             self.h = copy.h
+            
+            self.debugDistances= cp.deepcopy(copy.debugDistances)
             
 
     def get_children(self) -> '[State, ...]':

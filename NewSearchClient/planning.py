@@ -61,9 +61,17 @@ class Plan:
             
             # Take next state (leaf) from the frontier.     
             print("---top 3 in queue---", file=sys.stderr, flush=True)
-            for i in range(3):
+            
+            listRange= strategy.frontier.length()
+            if listRange >3:
+                listRange =3
+            
+            #print(str(listRange), file=sys.stderr, flush=True)
+            
+            for i in range(listRange):
                 s = strategy.frontier.peek(i)
-                
+                print("[awayFromGoal, boxToGoal, AgentToBox, inactiveAgent, unused boxes]", file=sys.stderr, flush=True)
+                print(str(s.debugDistances), file=sys.stderr, flush=True)
                 print(str(s), file=sys.stderr, flush=True)
             leaf = strategy.get_and_remove_leaf()
             #print(str(leaf.jointaction), file=sys.stderr, flush=True)

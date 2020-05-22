@@ -9,6 +9,7 @@ class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
         
         # Assign boxes to goals, and agents to those boxes
+        self.doResetAssignments = False
         self.resetAssignments(initial_state)
     
     def h(self, state: 'State') -> 'int':
@@ -172,34 +173,14 @@ class Heuristic(metaclass=ABCMeta):
         print('AGENT-BOX', file=sys.stderr, flush=True)
         print(state.agentBoxAssignments, file=sys.stderr, flush=True)
         '''
-        
-
-    def real_dist(self, state: 'State') -> 'int':
-        
-        # A boolean denoting whether to reassign boxes at the end of the
-        # heuristic calculation, or not
-        doResetAssignments = False
-        
-        # A weight denoting the importance of box-goal distances over agent-box
-        # distances,
-        goalBoxMultiplier = 2
+ 
+    def distance_already_completed_goals(self, state: 'State')-> 'int':
         
         # A weight denoting the punishment given for pushing already completed
         # boxes away from their goals
         goalBoxCompletedMultiplier = 5
         
-        # A weight denoting the punishment of the movement of unassigned agents
-        unassignedAgentMovementMultiplier = 2
-        
-        # A weight denoting the punishment of having unassigned and non-
-        # completed boxes in the level
-        loneBoxMultiplier = 1000
-        
-        # The total distance
-        totalDist = 0
-        
-        #print(state.goalDistances, file=sys.stderr, flush=True)
-        
+        dist =0
         # Get the list of previously completed boxes and goals
         boxIdsCompleted = list(state.boxIdsCompleted)
         goalIdsCompleted = list(state.goalIdsCompleted)
@@ -218,10 +199,18 @@ class Heuristic(metaclass=ABCMeta):
             # Given the above data, calculate the distance of the given
             # goal box pair
             goalBoxDist = State.goalDistances[goalIdx][boxCoordsCurrent[0]][boxCoordsCurrent[1]]
-            totalDist += (goalBoxDist * goalBoxCompletedMultiplier)
+            dist += (goalBoxDist * goalBoxCompletedMultiplier)
         
-        #print('CALC', file=sys.stderr, flush=True)
-        #print(state.goalBoxAssignments, file=sys.stderr, flush=True)
+        state.debugDistances[0] = dist
+        return dist
+
+    def distance_between_boxes_and_goals(self, state: 'State') -> 'int':
+
+        # A weight denoting the importance of box-goal distances over agent-box
+        # distances,
+        goalBoxMultiplier = 2        
+        
+        dist=0
         
         # For each letter...
         for letter in state.goalBoxAssignments:
@@ -230,7 +219,7 @@ class Heuristic(metaclass=ABCMeta):
             # Get every GOAL-BOX assignment
             for i in range(len(goalBoxAss)):
                 
-                # Get the coordinates of thttps://mail.google.com/he box in the assignment, and
+                # Get the coordinates of the box in the assignment, and
                 # look up its distance from its corresponding goal
                 boxCoordsCurrent = next(box for box in state.boxes if box.id == goalBoxAss[i][1]).coords
                 goalId = goalBoxAss[i][0]
@@ -246,12 +235,19 @@ class Heuristic(metaclass=ABCMeta):
                     state.goalIdsCompleted.add(goalBoxAss[i][0])
                     #if not (len(self.boxIdsCompleted) % len(state.agents)):
                         #print(goalBoxDist, file=sys.stderr, flush=True);
-                    doResetAssignments = True
+                    self.doResetAssignments = True
                     #print(state, file=sys.stderr, flush=True)
                 
                 # Add it to the total distance
-                totalDist += goalBoxDist * goalBoxMultiplier
-            
+                dist += goalBoxDist * goalBoxMultiplier  
+                
+        state.debugDistances[1] = dist        
+        return dist
+    
+    def distance_between_agents_and_boxes(self, state: 'State') -> 'int':
+        
+        dist=0
+        
         # For each color...
         for color in state.agentBoxAssignments:
             
@@ -267,11 +263,18 @@ class Heuristic(metaclass=ABCMeta):
                 
                 # Calculate distance between agent and box, and add it to the
                 # total distance
-                dist = state.mainGraph.get_distance(agentCoordsCurrent, boxCoordsCurrent)
-                totalDist += (dist) # / len(self.agentBoxAssignments[color]))
-                
-
+                dist_between_agent_box = state.mainGraph.get_distance(agentCoordsCurrent, boxCoordsCurrent)
+                dist += (dist_between_agent_box) # / len(self.agentBoxAssignments[color]))
         
+        state.debugDistances[2] = dist
+        return dist
+               
+    def punish_unassigned_agents(self,state: 'State') -> 'int':
+        
+        # A weight denoting the punishment of the movement of unassigned agents
+        unassignedAgentMovementMultiplier = 2
+        
+        dist =0
         # If there are unassigned agents, punish them for moving
         # If there is previous state
         if state.parent is not None:                
@@ -293,9 +296,17 @@ class Heuristic(metaclass=ABCMeta):
                     diffY = abs(currentAgent.coords[0] - pastAgent.coords[0])
                     diffX = abs(currentAgent.coords[1] - pastAgent.coords[1])       
                     #print("punishment: "+ "agent "+ str(currentAgent.number)+" is punished by: "+str((diffX + diffY) * unassignedAgentMovementMultiplier), file=sys.stderr, flush=True)
-                    totalDist += (diffX + diffY) * unassignedAgentMovementMultiplier
-                
-                
+                    dist += (diffX + diffY) * unassignedAgentMovementMultiplier
+        
+        state.debugDistances[3] = dist        
+        return dist
+
+    def punish_unassigned_boxes(self,state: 'State') -> 'int':
+        
+        # A weight denoting the punishment of having unassigned and non-
+        # completed boxes in the level
+        loneBoxMultiplier = 1000
+        
         # Punish boxes that are unassigned and are not yet in their goals
         boxIdsToBePunished = set([box.id for box in state.boxes])
         
@@ -314,12 +325,44 @@ class Heuristic(metaclass=ABCMeta):
                 # If this happens, we try to remove the box two times from the
                 # set, which raises an error
                 print('Erm, error handling...', file=sys.stderr, flush=True)
+          
             
-        totalDist += (len(boxIdsToBePunished) * loneBoxMultiplier)
+        dist = (len(boxIdsToBePunished) * loneBoxMultiplier)
+        state.debugDistances[4] = dist
+        return dist
+               
+    def real_dist(self, state: 'State') -> 'int':
+        
+        # A boolean denoting whether to reassign boxes at the end of the
+        # heuristic calculation, or not
+        self.doResetAssignments = False
+               
+        
+        # The total distance
+        totalDist = 0
+        
+        #print(state.goalDistances, file=sys.stderr, flush=True)
+        
+        totalDist += self.distance_already_completed_goals(state)
+        
+        totalDist += self.distance_between_boxes_and_goals(state)
+        
+        totalDist += self.distance_between_agents_and_boxes(state)
+        
+        totalDist += self.punish_unassigned_agents(state)
+        
+        totalDist += self.punish_unassigned_boxes(state)
+            
+        
+
+        
+        
+                
+        
                 
         
         # Reset goal-box box-agent assignments, if needed
-        if doResetAssignments:
+        if self.doResetAssignments:
             self.resetAssignments(state)
          
         '''
