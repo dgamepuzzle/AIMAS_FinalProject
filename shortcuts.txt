@@ -1,6 +1,14 @@
 ##RUN A SIMPLE level(old client)##
-java -jar server.jar -c "py OldSearchClient\searchclient_python\searchclient\searchclient.py" -l "Old competition levels and competition results\levels\SAD1.lvl" -g
+java -jar server.jar -c "python OldSearchClient\searchclient_python\searchclient\searchclient.py" -l "Old competition levels and competition results\levels\SAD1.lvl" -g
 
 
 ##RUN A SIMPLE level (new client)##
-java -jar server.jar -c "python NewSearchClient\mainsearchclient.py -greedy" -l "OldTrainingLevels\levels\MAD3.lvl" -g -s 100
+java -jar server.jar -c "python NewSearchClient\mainsearchclient.py -greedy" -l "\OldTrainingLevels\MAD3.lvl" -g -s 100
+
+
+##RUN COMPETITION LEVELS (one strategy per execution)##
+java -jar server.jar -c "python NewSearchClient/mainsearchclient.py --max-memory 2048 -greedy" -l "complevels/" -t 180 -o "AIstars.zip"
+
+
+##WATCH CLIENT PERFORMANCE FROM LOGFILE##
+java -jar server.jar -r "AIstars/SAaiaioh.log" -g
