@@ -55,7 +55,7 @@ class Communicator:
             line = line.replace(" ", "")
             color, line = line.split(":")
             for i in line.split(","): colors[i]  = color 
-        State.colors= colors
+        State.colors = colors
         
         #save level to state
         State.MAX_ROW = len(init_state_text)
