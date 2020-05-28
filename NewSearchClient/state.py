@@ -118,6 +118,9 @@ class State:
                             State.walls[coords[0]][coords[1]] = True
                         State.colors = {key:val for key, val in State.colors.items() if val != color}
                 
+                # Order the agents by their number
+                self.agents.sort(key=lambda x: int(x.number))
+                
                 # Pre-compute distances between all nodes in the graph
                 State.mainGraph.compute_distances()
                 for goal in State.goals:
