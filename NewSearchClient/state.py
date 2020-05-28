@@ -114,7 +114,9 @@ class State:
                         box_coords = [box.coords for box in self.boxes if box.color == color]
                         box_letters = [box.letter for box in self.boxes if box.color == color]
                         self.boxes = [box for box in self.boxes if box.coords in box_coords]
-                        for coords in box_coords: State.mainGraph.remove_node(coords)
+                        for coords in box_coords:
+                            State.mainGraph.remove_node(coords)
+                            State.walls[coords[0]][coords[1]] = True
                         #TODO: May this cause weird errors?? Why are we saving letter in an static array called 'colors'??
                         for letter in box_letters: self.colors.remove(letter)
                 
