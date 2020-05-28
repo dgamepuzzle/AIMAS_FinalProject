@@ -16,6 +16,11 @@ class Graph:
 
     def add_node(self, node):
         self.nodes.add(node)
+    
+    def remove_node(self, coords):
+        node = self.contains_node(coords[0],coords[1])
+        node.remove_edges()
+        self.nodes.remove(node)
 
     def contains_node(self, i,j):
         for node in self.nodes:
@@ -132,7 +137,14 @@ class Node:
         self.explored = False
       
     def add_edge(self, to_node):
-        self.edges.add(to_node) 
+        self.edges.add(to_node)
+    
+    def remove_edge(self, to_node):
+        self.edges.remove(to_node)
+    
+    def remove_edges(self):
+        for to_node in self.edges: to_node.remove_edge(self)
+        self.edges.clear()
       
     def coords2id(self, i,j):
         cols = state.State.MAX_COL

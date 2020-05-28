@@ -105,7 +105,19 @@ class State:
                         else:
                             # Save wall position.
                             State.walls[row][col] = True
-                            
+                
+                # Convert unmovable boxes to walls
+                box_colors = set([box.color for box in self.boxes])
+                agent_colors = set([agent.color for agent in self.agents])
+                for color in box_colors:
+                    if color not in agent_colors:
+                        box_coords = [box.coords for box in self.boxes if box.color == color]
+                        box_letters = [box.letter for box in self.boxes if box.color == color]
+                        self.boxes = [box for box in self.boxes if box.coords in box_coords]
+                        for coords in box_coords: State.mainGraph.remove_node(coords)
+                        #TODO: May this cause weird errors?? Why are we saving letter in an static array called 'colors'??
+                        for letter in box_letters: self.colors.remove(letter)
+                
                 # Pre-compute distances between all nodes in the graph
                 State.mainGraph.compute_distances()
                 for goal in State.goals:
