@@ -320,14 +320,8 @@ class Heuristic(metaclass=ABCMeta):
         
         # Exclude boxes already in goal
         for boxId in state.boxIdsCompleted:
-            try:
+            if boxId in boxIdsToBePunished:
                 boxIdsToBePunished.remove(boxId)
-            except:
-                # Apparently, there are cases when a box has been just pushed
-                # to its goal, but it's still assigned to its agent
-                # If this happens, we try to remove the box two times from the
-                # set, which raises an error
-                print('Erm, error handling...', file=sys.stderr, flush=True)
           
             
         dist = (len(boxIdsToBePunished) * loneBoxMultiplier)
