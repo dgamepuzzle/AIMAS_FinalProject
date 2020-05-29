@@ -86,7 +86,7 @@ class Plan:
             for child_state in leaf.get_children(): # The list of expanded states is shuffled randomly; see state.py.
                 if not strategy.is_explored(child_state) and not strategy.in_frontier(child_state):
                     strategy.add_to_frontier(child_state)
-                    #print(child_state, file=sys.stderr, flush=True)
+                    print(child_state, file=sys.stderr, flush=True)
             iterations += 1
         pass
     

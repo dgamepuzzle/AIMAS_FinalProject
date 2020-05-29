@@ -368,14 +368,14 @@ class Heuristic(metaclass=ABCMeta):
         if self.doResetAssignments:
             self.resetAssignments(state)
          
-        '''
+        
         print("totalDist: "+ str(totalDist), file=sys.stderr, flush=True)
         print("GB", file=sys.stderr, flush=True)
         print(state.goalBoxAssignments, file=sys.stderr, flush=True)
         print("AB", file=sys.stderr, flush=True)
         print(state.agentBoxAssignments, file=sys.stderr, flush=True)
         print(state, file=sys.stderr, flush=True)
-        '''
+        
         #time.sleep(0.5)    
         # Done.                         ...Done?
         return totalDist
