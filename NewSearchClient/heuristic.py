@@ -19,7 +19,7 @@ class Heuristic(metaclass=ABCMeta):
     
     def resetAssignments(self, state: 'State'):
         
-        # TO DO: HANDLE CASE WHEN THERE ARE LESS AGENTS THAN BOXES TO BE PUSHED
+        # TODO: HANDLE CASE WHEN THERE ARE LESS AGENTS THAN BOXES TO BE PUSHED
         # Allocates one distinct box to each of the goal and
         # allocates these boxes to distinct agents.
         
@@ -60,6 +60,7 @@ class Heuristic(metaclass=ABCMeta):
             goalDistancesToBeCompleted[goal.letter.lower()].append(State.goalDistances[idx])
         
         # DO IT FOR EACH GOAL/BOX LETTER
+        print('goalIdsToBeCompleted = '+str(goalIdsToBeCompleted), file=sys.stderr, flush=True)
         for letter in goalIdsToBeCompleted:
             
             # Create shorthands for readable code (they're just references,
@@ -80,6 +81,8 @@ class Heuristic(metaclass=ABCMeta):
             # goal3    2    10   7
             
             distMatrix = [[goalDistsLetter[i][boxCoordsLetter[j][0]][boxCoordsLetter[j][1]] for j in range(box_cnt)] for i in range(goal_cnt)]
+            print('distMatrix = '+str(distMatrix), file=sys.stderr, flush=True)
+            time.sleep(5)
             
             # Assign a box to each of the goals with the Hungarian algorithm
             #

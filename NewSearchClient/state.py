@@ -121,10 +121,13 @@ class State:
                 # Order the agents by their number
                 self.agents.sort(key=lambda x: int(x.number))
                 
+                # Order boxes and goals by their id
+                self.boxes.sort(key=lambda x: int(x.id))
+                self.goals.sort(key=lambda x: int(x.id))
+                
                 # Pre-compute distances between all nodes in the graph
                 State.mainGraph.compute_distances()
                 for goal in State.goals:
-                    
                     distsFromGoal = State.mainGraph.gridForGoal(State.walls, goal.coords)
                     State.goalDistances.append(distsFromGoal)
                     State.goalDistancesByLetter[goal.letter.lower()].append(distsFromGoal)
