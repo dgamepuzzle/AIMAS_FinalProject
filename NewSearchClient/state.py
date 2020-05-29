@@ -87,11 +87,13 @@ class State:
                                 
                             # Parse boxes.
                             elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                                color = State.colors[char]
-                                self.boxes.append(Box(char, color, (row, col)))
                                 if goal_state: #Parse goals
                                     State.goals.append(Goal(char,(row, col)))
                                     #print("adding goal at "+ str((row,col)), file=sys.stderr, flush=True)
+                                else: #parse boxes
+                                    color = State.colors[char]
+                                    self.boxes.append(Box(char, color, (row, col)))
+                                
                             
                             # Parse spaces.
                             elif (char ==' '):
@@ -168,7 +170,6 @@ class State:
         # Compute available actions per each agent.
         for agent_idx in range(num_agents):
             joint_actions.append(self.check_agent_possible_actions(self.agents[agent_idx]))
-            
         # Generate permutations with the available actions.
         perms = list(product(*joint_actions))
         #print(str(perms), file=sys.stderr, flush=True)
@@ -305,7 +306,16 @@ class State:
               +" not any(box.coords == (row,col) for box in self.boxes)="+str(not any(box.coords == (row,col) for box in self.boxes)) \
               +" not any(agent.coords == (row,col) for agent in self.agents)="+str(not any(agent.coords == (row,col) for agent in self.agents)), file=sys.stderr, flush=True)
             print(self, file=sys.stderr, flush=True)'''
-        return not State.walls[row][col] and not any(box.coords == (row,col) for box in self.boxes) and not any(agent.coords == (row,col) for agent in self.agents)
+        if State.walls[row][col]:
+            return False
+        elif any(box.coords == (row,col) for box in self.boxes):
+            return False
+        elif any(agent.coords == (row,col) for agent in self.agents):
+            return False
+        else :
+            return True
+            
+        #return not State.walls[row][col] and not any(box.coords == (row,col) for box in self.boxes) and not any(agent.coords == (row,col) for agent in self.agents)
     
     def box_at(self, row: 'int', col: 'int', color: 'str') -> 'Box':
         for box in self.boxes:
