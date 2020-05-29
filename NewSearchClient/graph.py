@@ -76,7 +76,7 @@ class Graph:
         queue = deque()
         queue.append(start)
         while queue:
-            node = queue.pop()
+            node = queue.popleft()
             dist = node.distances[coords] + 1
             path = start.paths[coords].copy().append(node.coords)
             for neighbor in node.edges:
