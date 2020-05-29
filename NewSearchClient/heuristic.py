@@ -60,7 +60,6 @@ class Heuristic(metaclass=ABCMeta):
             goalDistancesToBeCompleted[goal.letter.lower()].append(State.goalDistances[idx])
         
         # DO IT FOR EACH GOAL/BOX LETTER
-        print('goalIdsToBeCompleted = '+str(goalIdsToBeCompleted), file=sys.stderr, flush=True)
         for letter in goalIdsToBeCompleted:
             
             # Create shorthands for readable code (they're just references,
@@ -81,8 +80,6 @@ class Heuristic(metaclass=ABCMeta):
             # goal3    2    10   7
             
             distMatrix = [[goalDistsLetter[i][boxCoordsLetter[j][0]][boxCoordsLetter[j][1]] for j in range(box_cnt)] for i in range(goal_cnt)]
-            print('distMatrix = '+str(distMatrix), file=sys.stderr, flush=True)
-            time.sleep(5)
             
             # Assign a box to each of the goals with the Hungarian algorithm
             #
@@ -98,6 +95,7 @@ class Heuristic(metaclass=ABCMeta):
             # Write the result as the assignment of boxes and goals of letter "letter".
             state.goalBoxAssignments[letter] = idAssignments
             
+        
         #print(state.goalBoxAssignments, file=sys.stderr, flush=True)
             
         
@@ -170,12 +168,14 @@ class Heuristic(metaclass=ABCMeta):
         for color in state.goalBoxAssignments:            
             state.goalBoxAssignments[color] = [assignment for assignment in state.goalBoxAssignments[color] if assignment[1] in boxIdsWithAgents]
         
+        
         '''
         print('GOAL-BOX', file=sys.stderr, flush=True)
         print(state.goalBoxAssignments, file=sys.stderr, flush=True)
         print('AGENT-BOX', file=sys.stderr, flush=True)
         print(state.agentBoxAssignments, file=sys.stderr, flush=True)
         '''
+        
  
     def distance_already_completed_goals(self, state: 'State')-> 'int':
         
@@ -349,12 +349,6 @@ class Heuristic(metaclass=ABCMeta):
         totalDist += self.punish_unassigned_agents(state)
         
         totalDist += self.punish_unassigned_boxes(state)
-            
-        
-
-        
-        
-                
         
                 
         
@@ -370,6 +364,8 @@ class Heuristic(metaclass=ABCMeta):
         print(state.agentBoxAssignments, file=sys.stderr, flush=True)
         print(state, file=sys.stderr, flush=True)
         '''
+        
+        print(state, file=sys.stderr, flush=True)
         #time.sleep(0.5)    
         # Done.                         ...Done?
         return totalDist
