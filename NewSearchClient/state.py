@@ -252,6 +252,26 @@ class State:
                     else: return False
         return True
     
+    # Returns a list of coords in which there are obstacles in a path between two positions
+    def is_path_clear(self, coordsA, coordsB):
+        path = State.mainGraph.get_path(coordsA,coordsB)
+        obstacles = []
+        for pos in path:
+            if not self.is_free(pos[0],pos[1]):
+                obstacles.append(pos)
+        return obstacles
+    
+    # Returns the agent/box matching the coords
+    def get_object_at(self, coords):
+        for box in self.boxes:
+            if box.coords == (coords[0],coords[1]):
+                return box
+        for agent in self.agents:
+            if agent.coords == (coords[0],coords[1]):
+                return agent
+        print("Couldn't get the object at "+str(coords), file=sys.stderr, flush=True)
+        return None
+    
     def is_initial_state(self) -> 'bool':
         return self.parent is None
     
