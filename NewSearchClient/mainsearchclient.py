@@ -5,6 +5,7 @@ import sys
 import configuration
 from communicator import Communicator
 from planning import Plan
+from time_tracker import TimeTracker
 
 GROUPNAME = "AIStars"
 STRATEGY = "greedy"
@@ -23,10 +24,17 @@ def main(strategy_str: 'str', df: 'object'):
     com.ReadServerMessage()
     
     # Create a plan to solve the level.
+    TimeTracker.startTimer("Planning")
     planner = Plan(com.starting_state, com.goal_state, strategy_str)
+    
     
     # Solve the level (resolve the plan and get a path from initial state to goal state).
     commands = planner.resolve()
+    
+    TimeTracker.stopTimer("Planning")
+    
+    TimeTracker.printTimes()
+    
     for command in commands:  
         print(str(command.jointaction), file=sys.stderr, flush=True)
         

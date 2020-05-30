@@ -4,6 +4,7 @@ import sys
 from state import State
 import time
 from hungarian import hungarian
+from time_tracker import TimeTracker
 
 class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
@@ -13,9 +14,11 @@ class Heuristic(metaclass=ABCMeta):
         self.resetAssignments(initial_state)
     
     def h(self, state: 'State') -> 'int':
-        
         # Return the lowest possible step-distance based on assignments
-        return self.real_dist(state)
+        TimeTracker.startTimer("Heuristic calculations")
+        h= self.real_dist(state)
+        TimeTracker.stopTimer("Heuristic calculations")
+        return h
     
     def resetAssignments(self, state: 'State'):
         
@@ -354,7 +357,10 @@ class Heuristic(metaclass=ABCMeta):
         
         # Reset goal-box box-agent assignments, if needed
         if self.doResetAssignments:
+            TimeTracker.startTimer("Reset Assignments")
             self.resetAssignments(state)
+            TimeTracker.stopTimer("Reset Assignments")
+            
          
         '''
         print("totalDist: "+ str(totalDist), file=sys.stderr, flush=True)
@@ -366,7 +372,7 @@ class Heuristic(metaclass=ABCMeta):
         '''
         
         print(state, file=sys.stderr, flush=True)
-        #time.sleep(0.5)    
+            
         # Done.                         ...Done?
         return totalDist
         
