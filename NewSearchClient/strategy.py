@@ -123,6 +123,9 @@ class StrategyBestFirst(Strategy):
     def add_to_frontier(self, state: 'State'):
         self.frontier.insertInOrder(state)
         self.frontier_set.add(state)
+        while self.frontier_count() > 100:
+            leaf = self.frontier.deleteFromTail()
+            self.frontier_set.remove(leaf)
     
     def in_frontier(self, state: 'State') -> 'bool':
         return state in self.frontier_set
@@ -176,6 +179,13 @@ class PriorityQueue(object):
         item = self.queue[0] 
         del self.queue[0] 
         return item 
+    
+    # Deletes the least priority item
+    def deleteFromTail(self):
+        idx = self.length()-1
+        item = self.queue[idx] 
+        del self.queue[idx]
+        return item
     
     #look at item at index i
     def peek(self, i): 
