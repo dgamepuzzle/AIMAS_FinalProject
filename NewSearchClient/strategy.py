@@ -186,3 +186,6 @@ class PriorityQueue(object):
             s = self.queue[i]
             print("h value: "+str(s.h), file=sys.stderr, flush=True)
             return s
+        
+    def clearFrontier(self):
+        self.queue = [] 

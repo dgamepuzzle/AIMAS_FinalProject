@@ -4,6 +4,7 @@ import sys
 from state import State
 import time
 from hungarian import hungarian
+from time_tracker import TimeTracker
 
 class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
@@ -13,9 +14,11 @@ class Heuristic(metaclass=ABCMeta):
         self.resetAssignments(initial_state)
     
     def h(self, state: 'State') -> 'int':
-        
         # Return the lowest possible step-distance based on assignments
-        return self.real_dist(state)
+        TimeTracker.startTimer("Heuristic calculations")
+        h= self.real_dist(state)
+        TimeTracker.stopTimer("Heuristic calculations")
+        return h
     
     def resetAssignments(self, state: 'State'):
         
@@ -60,7 +63,6 @@ class Heuristic(metaclass=ABCMeta):
             goalDistancesToBeCompleted[goal.letter.lower()].append(State.goalDistances[idx])
         
         # DO IT FOR EACH GOAL/BOX LETTER
-        print('goalIdsToBeCompleted = '+str(goalIdsToBeCompleted), file=sys.stderr, flush=True)
         for letter in goalIdsToBeCompleted:
             
             # Create shorthands for readable code (they're just references,
@@ -81,8 +83,6 @@ class Heuristic(metaclass=ABCMeta):
             # goal3    2    10   7
             
             distMatrix = [[goalDistsLetter[i][boxCoordsLetter[j][0]][boxCoordsLetter[j][1]] for j in range(box_cnt)] for i in range(goal_cnt)]
-            print('distMatrix = '+str(distMatrix), file=sys.stderr, flush=True)
-            time.sleep(5)
             
             # Assign a box to each of the goals with the Hungarian algorithm
             #
@@ -98,6 +98,7 @@ class Heuristic(metaclass=ABCMeta):
             # Write the result as the assignment of boxes and goals of letter "letter".
             state.goalBoxAssignments[letter] = idAssignments
             
+        
         #print(state.goalBoxAssignments, file=sys.stderr, flush=True)
             
         
@@ -170,12 +171,14 @@ class Heuristic(metaclass=ABCMeta):
         for color in state.goalBoxAssignments:            
             state.goalBoxAssignments[color] = [assignment for assignment in state.goalBoxAssignments[color] if assignment[1] in boxIdsWithAgents]
         
+        
         '''
         print('GOAL-BOX', file=sys.stderr, flush=True)
         print(state.goalBoxAssignments, file=sys.stderr, flush=True)
         print('AGENT-BOX', file=sys.stderr, flush=True)
         print(state.agentBoxAssignments, file=sys.stderr, flush=True)
         '''
+        
  
     def distance_already_completed_goals(self, state: 'State')-> 'int':
         
@@ -320,14 +323,8 @@ class Heuristic(metaclass=ABCMeta):
         
         # Exclude boxes already in goal
         for boxId in state.boxIdsCompleted:
-            try:
+            if boxId in boxIdsToBePunished:
                 boxIdsToBePunished.remove(boxId)
-            except:
-                # Apparently, there are cases when a box has been just pushed
-                # to its goal, but it's still assigned to its agent
-                # If this happens, we try to remove the box two times from the
-                # set, which raises an error
-                print('Erm, error handling...', file=sys.stderr, flush=True)
           
             
         dist = (len(boxIdsToBePunished) * loneBoxMultiplier)
@@ -355,18 +352,15 @@ class Heuristic(metaclass=ABCMeta):
         totalDist += self.punish_unassigned_agents(state)
         
         totalDist += self.punish_unassigned_boxes(state)
-            
-        
-
-        
-        
-                
         
                 
         
         # Reset goal-box box-agent assignments, if needed
         if self.doResetAssignments:
+            TimeTracker.startTimer("Reset Assignments")
             self.resetAssignments(state)
+            TimeTracker.stopTimer("Reset Assignments")
+            
          
         
         print("totalDist: "+ str(totalDist), file=sys.stderr, flush=True)
@@ -375,8 +369,6 @@ class Heuristic(metaclass=ABCMeta):
         print("AB", file=sys.stderr, flush=True)
         print(state.agentBoxAssignments, file=sys.stderr, flush=True)
         print(state, file=sys.stderr, flush=True)
-        
-        #time.sleep(0.5)    
         # Done.                         ...Done?
         return totalDist
         
