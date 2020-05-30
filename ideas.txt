@@ -1,0 +1,31 @@
+AIMAS IDEAS:
+
+1. figure our if there are unmovable boxes, if yes transform them into walls.
+
+2. If there are hard walls seperating levels, split them up.
+3. If there are no goals or agents in a sublevel ignore it.
+4. go to step 1 again until level can't be split anymore.
+
+Now for each sublevel:
+
+1.Rank tasks in order of completion.
+
+
+
++++++++++++
++       +a+
++d+ABCD +b+
++c+01 23+c+
++b+ DCBA+d+
++a+       +
++++++++++++
+
++++++
++AAA+
++BBB+
+++ ++
+++0++
+++ ++
++bbb+
++aaa+
++++++

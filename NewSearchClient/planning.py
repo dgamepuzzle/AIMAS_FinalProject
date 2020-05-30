@@ -10,6 +10,7 @@ import sys
 import configuration as config
 from heuristic import AStar, WAStar, Greedy
 from strategy import StrategyBFS, StrategyDFS, StrategyBestFirst
+from state import State
 
 
 class Plan:
@@ -59,23 +60,26 @@ class Plan:
             if strategy.frontier_empty():
                 return None
             
-            # Take next state (leaf) from the frontier.     
-            '''print("---top 3 in queue---", file=sys.stderr, flush=True)
+            # Debug, look at the three best states in the queue
+            print("---top 3 in queue---", file=sys.stderr, flush=True)
             
             listRange= strategy.frontier.length()
             if listRange >3:
                 listRange =3
             
-            #print(str(listRange), file=sys.stderr, flush=True)
-            
             for i in range(listRange):
                 s = strategy.frontier.peek(i)
+                print("GoalBox: "+ str(s.goalBoxAssignments), file=sys.stderr, flush=True)
+                print("AgentBox: "+ str(s.agentBoxAssignments), file=sys.stderr, flush=True)
                 print("[awayFromGoal, boxToGoal, AgentToBox, inactiveAgent, unused boxes]", file=sys.stderr, flush=True)
                 print(str(s.debugDistances), file=sys.stderr, flush=True)
-                print(str(s), file=sys.stderr, flush=True)'''
+                print(str(s), file=sys.stderr, flush=True)
+                
+            #time.sleep(0.5)    
+                
+            # Take next state (leaf) from the frontier.
             leaf = strategy.get_and_remove_leaf()
-            #print(str(leaf.jointaction), file=sys.stderr, flush=True)
-            #time.sleep(0.5)
+            
             # Check if the current state corresponds to a goal state. If True return the current plan.
             if leaf.is_goal_state():
                 print('Found goal!', file=sys.stderr, flush=True)
@@ -85,7 +89,18 @@ class Plan:
             strategy.add_to_explored(leaf)
             for child_state in leaf.get_children(): # The list of expanded states is shuffled randomly; see state.py.
                 if not strategy.is_explored(child_state) and not strategy.in_frontier(child_state):
+                    
+                   
+                    
                     strategy.add_to_frontier(child_state)
+                    
+                     #if goal found clear frontier
+                    #print("CLEARING21312312"+str(child_state.goalIdsCompleted) +"  "+ str(child_state.parent.goalIdsCompleted), file=sys.stderr, flush=True)
+                    '''if child_state.goalIdsCompleted != child_state.parent.goalIdsCompleted:
+                        strategy.frontier.clearFrontier()
+                        print("CLEARING", file=sys.stderr, flush=True)
+                        strategy.add_to_frontier(child_state)
+                        break'''
                     #print(child_state, file=sys.stderr, flush=True)
             iterations += 1
         pass
