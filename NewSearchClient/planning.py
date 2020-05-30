@@ -11,6 +11,7 @@ import configuration as config
 from heuristic import AStar, WAStar, Greedy
 from strategy import StrategyBFS, StrategyDFS, StrategyBestFirst
 from state import State
+from time_tracker import TimeTracker
 
 
 class Plan:
@@ -87,21 +88,19 @@ class Plan:
             
             # Mark leaf as explored and add children states to frontier.
             strategy.add_to_explored(leaf)
-            for child_state in leaf.get_children(): # The list of expanded states is shuffled randomly; see state.py.
+            
+            TimeTracker.startTimer("get children")
+            children = leaf.get_children()
+            TimeTracker.stopTimer("get children")
+            
+            TimeTracker.startTimer("run through children")
+            for child_state in children : # The list of expanded states is shuffled randomly; see state.py.
                 if not strategy.is_explored(child_state) and not strategy.in_frontier(child_state):
-                    
                    
-                    
                     strategy.add_to_frontier(child_state)
-                    
-                     #if goal found clear frontier
-                    #print("CLEARING21312312"+str(child_state.goalIdsCompleted) +"  "+ str(child_state.parent.goalIdsCompleted), file=sys.stderr, flush=True)
-                    '''if child_state.goalIdsCompleted != child_state.parent.goalIdsCompleted:
-                        strategy.frontier.clearFrontier()
-                        print("CLEARING", file=sys.stderr, flush=True)
-                        strategy.add_to_frontier(child_state)
-                        break'''
+
                     #print(child_state, file=sys.stderr, flush=True)
             iterations += 1
+            TimeTracker.stopTimer("run through children")
         pass
     
