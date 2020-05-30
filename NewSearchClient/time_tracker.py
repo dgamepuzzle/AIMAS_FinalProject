@@ -3,6 +3,22 @@
 Created on Sat May 30 09:26:49 2020
 
 @author: magnu
+
+
+HOW TO USE
+
+import TimeTracker from time_tracker
+into your file,
+then to start a time use.
+TimeTracker.startTimer("Planning") 
+with a unique ID, (here it is "Planning")
+
+and to stop the time use
+TimeTracker.startTimer("Planning")
+
+Finally to show your recorded times use either
+TimeTracker.printTimes(), which takes all the recorded times and add the same ID's together or
+TimeTracker.printIndividualTimes() which prints every recorded time under a tag
 """
 import time
 import sys
@@ -48,10 +64,11 @@ class TimeTracker:
             output += key +": "
             output += str(sum(entries)) + "\n"
         
-        print("========TIMES========:\n"+str(output), file=sys.stderr, flush=True)
+        print("========TOTAL TIMES========:\n"+str(output), file=sys.stderr, flush=True)
 
-
-
+    @staticmethod
+    def printIndividualTimes():
+        print("========INDIVIDUAL TIMES========:\n"+str(TimeTracker.finishedTimers), file=sys.stderr, flush=True)
 '''
 Improvemt to do, make a heirachial graph that has keys as nodes, and time entries in each node. If a timer is started while another timer is running
 It becomes a child of that timer, with this we can see what times are part of other times.
