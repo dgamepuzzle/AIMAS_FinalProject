@@ -66,23 +66,25 @@ class Graph:
     # Pre-computes distances and paths for all nodes within the graph
     def compute_distances(self):
         for node in self.nodes:
+            #print("Computing distance for node "+str(node.coords), file=sys.stderr, flush=True)
             self.compute_distances_from_node(node.coords)
     
     # Computes distances and paths for a concrete node
     def compute_distances_from_node(self, coords):
         start = self.contains_node(coords[0],coords[1])
         start.distances[coords] = 0
-        start.paths[coords] = []
+        #start.paths[coords] = []
         queue = deque()
         queue.append(start)
         while queue:
             node = queue.popleft()
             dist = node.distances[coords] + 1
-            path = start.paths[coords].copy().append(node.coords)
+            #print("Distance... "+str(dist), file=sys.stderr, flush=True)
+            #path = start.paths[coords].copy().append(node.coords)
             for neighbor in node.edges:
                 if not neighbor.explored:
                     neighbor.distances[coords] = dist
-                    neighbor.paths[coords] = path
+                    #neighbor.paths[coords] = path
                     queue.append(neighbor)
             node.explored = True
         self.reset_explored_flags()
