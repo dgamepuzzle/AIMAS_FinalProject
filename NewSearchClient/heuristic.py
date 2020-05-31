@@ -22,7 +22,6 @@ class Heuristic(metaclass=ABCMeta):
     
     def resetAssignments(self, state: 'State'):
         
-        # TODO: HANDLE CASE WHEN THERE ARE LESS AGENTS THAN BOXES TO BE PUSHED
         # Allocates one distinct box to each of the goal and
         # allocates these boxes to distinct agents.
         
@@ -150,7 +149,7 @@ class Heuristic(metaclass=ABCMeta):
             # agent1    1    5    3
             # agent2    8    7    5
             # agent3    2    10   7
-            distMatrix = [state.mainGraph.get_distance_one_to_many(agentCoord, boxCoordsColor) for agentCoord in agentCoordsColor]
+            distMatrix = [state.get_distance_one_to_many(agentCoord, boxCoordsColor) for agentCoord in agentCoordsColor]
             
             # Get assignments in a 
             # [(agentX, boxY), (agentY, boxZ), (agentZ, boxX)] format
@@ -269,7 +268,7 @@ class Heuristic(metaclass=ABCMeta):
                 
                 # Calculate distance between agent and box, and add it to the
                 # total distance
-                dist_between_agent_box = state.mainGraph.get_distance(agentCoordsCurrent, boxCoordsCurrent)
+                dist_between_agent_box = state.get_distance(agentCoordsCurrent, boxCoordsCurrent)
                 dist += (dist_between_agent_box) # / len(self.agentBoxAssignments[color]))
         
         state.debugDistances[2] = dist
