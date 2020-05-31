@@ -11,7 +11,6 @@ import sys
 from itertools import product
 import networkx as nx
 
-#from graph import Graph
 from jointaction import Action, ActionType, ALL_ACTIONS
 from level_elements import Agent, Box, Goal
 from collections import defaultdict
@@ -35,7 +34,6 @@ class State:
     goalIds = defaultdict(list)                     # Stores corresponding goal Ids in the same fashion as the
                                                     # above defaultdicts.
     
-    #mainGraph = Graph()
     mainGraph = nx.Graph()
     mainGraphDistances = None
     #mainGraphPaths = None
@@ -71,7 +69,6 @@ class State:
                         if char != '+':
                             
                             # First, as it's not a wall, add node to the static graph and create its relevant edges.
-                            #cur_node = State.mainGraph.create_or_get_node(row, col)
                             cur_node_id = self.coords2id(row, col)
                             if not State.mainGraph.has_node(cur_node_id): State.mainGraph.add_node(cur_node_id)
                             for coord in [(-1,0),(1,0),(0,1),(0,-1)]:
@@ -80,8 +77,6 @@ class State:
                                 h = min(State.MAX_ROW-1, max(0, row+k))
                                 u = min(State.MAX_COL-1, max(0, col+l))
                                 if level_lines[h][u]!='+':
-                                    #dest_node = State.mainGraph.create_or_get_node(h, u)
-                                    #cur_node.add_edge(dest_node)
                                     dest_node_id = self.coords2id(h, u)
                                     if not State.mainGraph.has_node(dest_node_id): State.mainGraph.add_node(dest_node_id)
                                     if not State.mainGraph.has_edge(cur_node_id,dest_node_id): State.mainGraph.add_edge(cur_node_id,dest_node_id)
@@ -123,7 +118,6 @@ class State:
                         box_coords = [box.coords for box in self.boxes if box.color == color]
                         self.boxes = [box for box in self.boxes if box.coords in box_coords]
                         for coords in box_coords:
-                            #State.mainGraph.remove_node(coords)
                             State.mainGraph.remove_node(self.coords2id(coords[0],coords[1]))
                             State.walls[coords[0]][coords[1]] = True
                         State.colors = {key:val for key, val in State.colors.items() if val != color}
@@ -138,11 +132,9 @@ class State:
                 # Pre-compute distances between all nodes in the graph
                 if goal_state:
                     print('Pre-computing distances for the level...', file=sys.stderr, flush=True)
-                    #State.mainGraph.compute_distances()
                     #State.mainGraphPaths = nx.all_pairs_shortest_path(State.mainGraph)
                     State.mainGraphDistances = nx.all_pairs_shortest_path_length(State.mainGraph)
                     for goal in State.goals:
-                        #distsFromGoal = State.mainGraph.gridForGoal(State.walls, goal.coords)
                         distsFromGoal = self.gridForGoal(goal.coords)
                         State.goalDistances.append(distsFromGoal)
                         State.goalDistancesByLetter[goal.letter.lower()].append(distsFromGoal)
