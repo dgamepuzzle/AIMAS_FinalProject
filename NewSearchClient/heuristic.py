@@ -22,7 +22,6 @@ class Heuristic(metaclass=ABCMeta):
     
     def resetAssignments(self, state: 'State'):
         
-        # TODO: HANDLE CASE WHEN THERE ARE LESS AGENTS THAN BOXES TO BE PUSHED
         # Allocates one distinct box to each of the goal and
         # allocates these boxes to distinct agents.
         
