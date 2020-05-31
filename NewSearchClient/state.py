@@ -10,6 +10,7 @@ import random
 import sys
 from itertools import product
 import networkx as nx
+import time
 
 from jointaction import Action, ActionType, ALL_ACTIONS
 from level_elements import Agent, Box, Goal
@@ -35,7 +36,7 @@ class State:
                                                     # above defaultdicts.
     
     mainGraph = nx.Graph()
-    mainGraphDistances = None
+    mainGraphDistances = defaultdict()
     #mainGraphPaths = None
     
     def __init__(self, copy: 'State' = None, level_lines = "", goal_state = False):
@@ -133,7 +134,9 @@ class State:
                 if goal_state:
                     print('Pre-computing distances for the level...', file=sys.stderr, flush=True)
                     #State.mainGraphPaths = nx.all_pairs_shortest_path(State.mainGraph)
-                    State.mainGraphDistances = nx.all_pairs_shortest_path_length(State.mainGraph)
+                    dists = nx.all_pairs_shortest_path_length(State.mainGraph)
+                    for node_dists in dists:
+                        State.mainGraphDistances[node_dists[0]] = node_dists[1]
                     for goal in State.goals:
                         distsFromGoal = self.gridForGoal(goal.coords)
                         State.goalDistances.append(distsFromGoal)
@@ -321,7 +324,7 @@ class State:
         return None
     
     
-    ### GRAPH METHODS ###
+    ############### GRAPH METHODS ###############
     
     # Traverses the level defined by the 2d walls array
     # and outputs a 2d array of the same size, filled with distances from
@@ -358,7 +361,7 @@ class State:
         start = self.coords2id(start_coords[0],start_coords[1])
         for idx, end_coords in enumerate(end_coords_array):
             try:
-                distances[idx] = State.mainGraphDistances[start][self.coords2id(end_coords)]
+                distances[idx] = State.mainGraphDistances[start][self.coords2id(end_coords[0],end_coords[1])]
             except:
                 distances[idx] = float('inf')
         return distances
@@ -386,7 +389,8 @@ class State:
     def id2coords(self, id):
         return (int(id/self.MAX_COL),id % self.MAX_COL)
     
-    ### END OF GRAPH METHODS ###
+    ############### END OF GRAPH METHODS ###############
+    
 
     def __repr__(self):
         lines = []
