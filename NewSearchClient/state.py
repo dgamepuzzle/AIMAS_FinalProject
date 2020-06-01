@@ -371,7 +371,7 @@ class State:
         try:
             return State.mainGraphDistances[self.coords2id(coordsA)][self.coords2id(coordsB)]
         except:
-            print("Couldn't compute the distance to "+str(coordsB), file=sys.stderr, flush=True)
+            print("Couldn't compute the distance from {} to {}".format(coordsA,coordsB), file=sys.stderr, flush=True)
             return float('inf')
         
     '''# Returns a list of coords in which there are obstacles in a path between two positions
