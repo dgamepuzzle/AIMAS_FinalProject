@@ -10,7 +10,6 @@ import sys
 import configuration as config
 from heuristic import AStar, WAStar, Greedy
 from strategy import StrategyBFS, StrategyDFS, StrategyBestFirst
-from state import State
 from time_tracker import TimeTracker
 
 

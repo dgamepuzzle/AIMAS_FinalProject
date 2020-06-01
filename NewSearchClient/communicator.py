@@ -60,11 +60,11 @@ class Communicator:
         #save level to state
         State.MAX_ROW = len(init_state_text)
         State.MAX_COL = longest_line
-        print('Pre-computing distances for the level...', file=sys.stderr, flush=True)
         Communicator.starting_state = State(None, init_state_text) 
+        
         #save goal state
         Communicator.goal_state = State(None, goal_state_text, goal_state=True)
-        print('Pre-computing of distances finished succesfully!', file=sys.stderr, flush=True)
+
         
     def send_commands_to_server(self, commands):
         # Read server messages from stdin.
