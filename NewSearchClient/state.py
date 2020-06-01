@@ -23,6 +23,9 @@ class State:
     goals = []
     colors = []
     walls = []
+    boxesCount = defaultdict()
+    goalsCount = defaultdict()
+    boxSurplus = defaultdict()
     goalDistancesByLetter = defaultdict(list)
     goalDistances = []                              # Store the references of the above goal distance arrays in a
                                                     # flat array for easier searchhing
@@ -37,7 +40,7 @@ class State:
     
     mainGraph = nx.Graph()
     mainGraphDistances = defaultdict()
-    #mainGraphPaths = None
+    mainGraphPaths = defaultdict()
     
     def __init__(self, copy: 'State' = None, level_lines = "", goal_state = False):
         self._hash = None
@@ -130,10 +133,19 @@ class State:
                 self.boxes.sort(key=lambda x: int(x.id))
                 self.goals.sort(key=lambda x: int(x.id))
                 
+                # Count boxes for the box surplus
+                if not goal_state:
+                    box_letters = [i.letter for i in self.boxes]
+                    box_set = set(box_letters)
+                    for letter in box_set:
+                        State.boxesCount[letter.lower()] = box_letters.count(letter)
+                
                 # Pre-compute distances between all nodes in the graph
-                if goal_state:
-                    print('Pre-computing distances for the level...', file=sys.stderr, flush=True)
-                    #State.mainGraphPaths = nx.all_pairs_shortest_path(State.mainGraph)
+                else:
+                    print('Pre-computing paths & distances for the level...', file=sys.stderr, flush=True)
+                    paths = nx.all_pairs_shortest_path(State.mainGraph)
+                    for node_paths in paths:
+                        State.mainGraphPaths[node_paths[0]] = node_paths[1]
                     dists = nx.all_pairs_shortest_path_length(State.mainGraph)
                     for node_dists in dists:
                         State.mainGraphDistances[node_dists[0]] = node_dists[1]
@@ -143,7 +155,13 @@ class State:
                         State.goalDistancesByLetter[goal.letter.lower()].append(distsFromGoal)
                         State.goalCoords[goal.letter.lower()].append(goal.coords)
                         State.goalIds[goal.letter.lower()].append(goal.id)
-                    print('Pre-computing of distances completed succesfully!', file=sys.stderr, flush=True)
+                    print('Pre-computing of paths & distances completed succesfully!', file=sys.stderr, flush=True)
+                    
+                    # Count goals for the box surplus
+                    goal_letters = [i.letter for i in self.goals]
+                    goal_set = set(goal_letters)
+                    for letter in goal_set:
+                        State.goalsCount[letter.lower()] = goal_letters.count(letter)
                 
             except Exception as ex:
                 print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
@@ -374,14 +392,15 @@ class State:
             print("Couldn't compute the distance from {} to {}".format(coordsA,coordsB), file=sys.stderr, flush=True)
             return float('inf')
         
-    '''# Returns a list of coords in which there are obstacles in a path between two positions
+    # Returns a list of coords in which there are obstacles in a path between two positions
     def is_path_clear(self, coordsA, coordsB):
-        path = State.mainGraphPaths[self.coords2id(coordsA)][self.coords2id(coordsB)]
+        path = State.mainGraphPaths[self.coords2id(coordsA[0],coordsA[1])][self.coords2id(coordsB[0],coordsB[1])]
         obstacles = []
         for pos in path:
-            if not self.is_free(pos[0],pos[1]):
-                obstacles.append(pos)
-        return obstacles'''
+            coords = self.id2coords(pos)
+            if not self.is_free(coords[0],coords[1]):
+                obstacles.append(coords)
+        return obstacles
     
     def coords2id(self, i,j):
         return i*self.MAX_COL + j

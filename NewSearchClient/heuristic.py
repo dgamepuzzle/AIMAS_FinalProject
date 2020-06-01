@@ -16,7 +16,7 @@ class Heuristic(metaclass=ABCMeta):
     def h(self, state: 'State') -> 'int':
         # Return the lowest possible step-distance based on assignments
         TimeTracker.startTimer("Heuristic calculations")
-        h= self.real_dist(state)
+        h = self.real_dist(state)
         TimeTracker.stopTimer("Heuristic calculations")
         return h
     
@@ -185,7 +185,7 @@ class Heuristic(metaclass=ABCMeta):
         # boxes away from their goals
         goalBoxCompletedMultiplier = 5
         
-        dist =0
+        dist = 0
         # Get the list of previously completed boxes and goals
         boxIdsCompleted = list(state.boxIdsCompleted)
         goalIdsCompleted = list(state.goalIdsCompleted)
@@ -285,10 +285,10 @@ class Heuristic(metaclass=ABCMeta):
         if state.parent is not None:                
             #print("agentBoxAssignments " + str(self.agentBoxAssignments), file=sys.stderr, flush=True)
             agentBoxAssignmentsValues = state.agentBoxAssignments.values()
-            assignedAgentIds =set()
+            assignedAgentIds = set()
             for color in agentBoxAssignmentsValues:
                 for agentid in color:
-                    assignedAgentIds.add( agentid[0])
+                    assignedAgentIds.add(agentid[0])
             
             #print("assigned agents+ " + str(assignedAgentIds), file=sys.stderr, flush=True)
             
@@ -324,8 +324,11 @@ class Heuristic(metaclass=ABCMeta):
         for boxId in state.boxIdsCompleted:
             if boxId in boxIdsToBePunished:
                 boxIdsToBePunished.remove(boxId)
-          
-            
+        
+        # Check if there are more goals for the remaining boxes
+        # If not, it's not necessary to punish them...
+        
+        
         dist = (len(boxIdsToBePunished) * loneBoxMultiplier)
         state.debugDistances[4] = dist
         return dist
@@ -361,7 +364,7 @@ class Heuristic(metaclass=ABCMeta):
             TimeTracker.stopTimer("Reset Assignments")
             
          
-        
+        print("totalDist = "+ str(state.debugDistances), file=sys.stderr, flush=True)
         print("totalDist: "+ str(totalDist), file=sys.stderr, flush=True)
         print("GB", file=sys.stderr, flush=True)
         print(state.goalBoxAssignments, file=sys.stderr, flush=True)
