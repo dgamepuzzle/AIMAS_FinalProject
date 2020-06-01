@@ -369,7 +369,7 @@ class State:
     # Returns the distance between two nodes
     def get_distance(self, coordsA, coordsB):
         try:
-            return State.mainGraphDistances[self.coords2id(coordsA)][self.coords2id(coordsB)]
+            return State.mainGraphDistances[self.coords2id(coordsA[0],coordsA[1])][self.coords2id(coordsB[0],coordsB[1])]
         except:
             print("Couldn't compute the distance from {} to {}".format(coordsA,coordsB), file=sys.stderr, flush=True)
             return float('inf')
