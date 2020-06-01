@@ -9,8 +9,9 @@ import copy as cp
 import random
 import sys
 from itertools import product
+import networkx as nx
+import time
 
-from graph import Graph
 from jointaction import Action, ActionType, ALL_ACTIONS
 from level_elements import Agent, Box, Goal
 from collections import defaultdict
@@ -34,7 +35,9 @@ class State:
     goalIds = defaultdict(list)                     # Stores corresponding goal Ids in the same fashion as the
                                                     # above defaultdicts.
     
-    mainGraph = Graph()
+    mainGraph = nx.Graph()
+    mainGraphDistances = defaultdict()
+    #mainGraphPaths = None
     
     def __init__(self, copy: 'State' = None, level_lines = "", goal_state = False):
         self._hash = None
@@ -67,17 +70,17 @@ class State:
                         if char != '+':
                             
                             # First, as it's not a wall, add node to the static graph and create its relevant edges.
-                            cur_node = State.mainGraph.create_or_get_node(row, col)
+                            cur_node_id = self.coords2id(row, col)
+                            if not State.mainGraph.has_node(cur_node_id): State.mainGraph.add_node(cur_node_id)
                             for coord in [(-1,0),(1,0),(0,1),(0,-1)]:
                                 k = coord[0]
                                 l = coord[1]
                                 h = min(State.MAX_ROW-1, max(0, row+k))
                                 u = min(State.MAX_COL-1, max(0, col+l))
                                 if level_lines[h][u]!='+':
-                                    dest_node = State.mainGraph.create_or_get_node(h, u)
-                                    cur_node.add_edge(dest_node)
-                                    #mainGraph.add_edge(cur_node, dest_node, 1) # default distance = 1
-                                    #print(str(cur_node) + " ->" + str(dest_node), file=sys.stderr, flush=True)
+                                    dest_node_id = self.coords2id(h, u)
+                                    if not State.mainGraph.has_node(dest_node_id): State.mainGraph.add_node(dest_node_id)
+                                    if not State.mainGraph.has_edge(cur_node_id,dest_node_id): State.mainGraph.add_edge(cur_node_id,dest_node_id)
                             
                             # Parse agents.
                             if char in "0123456789":
@@ -116,25 +119,31 @@ class State:
                         box_coords = [box.coords for box in self.boxes if box.color == color]
                         self.boxes = [box for box in self.boxes if box.coords in box_coords]
                         for coords in box_coords:
-                            State.mainGraph.remove_node(coords)
+                            State.mainGraph.remove_node(self.coords2id(coords[0],coords[1]))
                             State.walls[coords[0]][coords[1]] = True
                         State.colors = {key:val for key, val in State.colors.items() if val != color}
                 
                 # Order the agents by their number
                 self.agents.sort(key=lambda x: int(x.number))
                 
-                # Order boxes and goals by their id
+                # Order boxes by their id
                 self.boxes.sort(key=lambda x: int(x.id))
                 self.goals.sort(key=lambda x: int(x.id))
                 
                 # Pre-compute distances between all nodes in the graph
-                State.mainGraph.compute_distances()
-                for goal in State.goals:
-                    distsFromGoal = State.mainGraph.gridForGoal(State.walls, goal.coords)
-                    State.goalDistances.append(distsFromGoal)
-                    State.goalDistancesByLetter[goal.letter.lower()].append(distsFromGoal)
-                    State.goalCoords[goal.letter.lower()].append(goal.coords)
-                    State.goalIds[goal.letter.lower()].append(goal.id)
+                if goal_state:
+                    print('Pre-computing distances for the level...', file=sys.stderr, flush=True)
+                    #State.mainGraphPaths = nx.all_pairs_shortest_path(State.mainGraph)
+                    dists = nx.all_pairs_shortest_path_length(State.mainGraph)
+                    for node_dists in dists:
+                        State.mainGraphDistances[node_dists[0]] = node_dists[1]
+                    for goal in State.goals:
+                        distsFromGoal = self.gridForGoal(goal.coords)
+                        State.goalDistances.append(distsFromGoal)
+                        State.goalDistancesByLetter[goal.letter.lower()].append(distsFromGoal)
+                        State.goalCoords[goal.letter.lower()].append(goal.coords)
+                        State.goalIds[goal.letter.lower()].append(goal.id)
+                    print('Pre-computing of distances completed succesfully!', file=sys.stderr, flush=True)
                 
             except Exception as ex:
                 print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
@@ -256,15 +265,6 @@ class State:
                     else: return False
         return True
     
-    # Returns a list of coords in which there are obstacles in a path between two positions
-    def is_path_clear(self, coordsA, coordsB):
-        path = State.mainGraph.get_path(coordsA,coordsB)
-        obstacles = []
-        for pos in path:
-            if not self.is_free(pos[0],pos[1]):
-                obstacles.append(pos)
-        return obstacles
-    
     # Returns the agent/box matching the coords
     def get_object_at(self, coords):
         for box in self.boxes:
@@ -322,6 +322,75 @@ class State:
             if box.coords == (row,col) and box.color == color:
                 return box
         return None
+    
+    
+    ############### GRAPH METHODS ###############
+    
+    # Traverses the level defined by the 2d walls array
+    # and outputs a 2d array of the same size, filled with distances from
+    # a given point.
+    #
+    #   Input wall array                  Resulting array
+    #
+    #   wall     wall    start            0  0  0 (start)
+    #   notwall  notwall notwall          3  2  1
+    #   notwall  wall    notwall  ---->   4  0  2
+    #   notwall  wall    notwall          5  0  3
+    #
+    def gridForGoal(self, startCoords):
+        rowCnt = len(State.walls)
+        colCnt = len(State.walls[0])
+        gridDistances = [[0 for j in range(colCnt)] for i in range(rowCnt)]
+        for node in State.mainGraph:
+            node_coords = self.id2coords(node)
+            try:
+                gridDistances[node_coords[0]][node_coords[1]] = State.mainGraphDistances[node][self.coords2id(startCoords[0],startCoords[1])]
+            except:
+                gridDistances[node_coords[0]][node_coords[1]] = 0
+        return gridDistances
+    
+    # Calculates distances between the_coords of one start point and 
+    # many end points in a single graph traversal. Much more efficient than
+    # running BFS for each of the end points.
+    #
+    # Returns an array representing the distances from the start point to
+    # each of the end points, in a corresponding order as in the 
+    # end_coords_array.
+    def get_distance_one_to_many(self, start_coords, end_coords_array):
+        distances = [float('inf') for i in range(len(end_coords_array))]
+        start = self.coords2id(start_coords[0],start_coords[1])
+        for idx, end_coords in enumerate(end_coords_array):
+            try:
+                distances[idx] = State.mainGraphDistances[start][self.coords2id(end_coords[0],end_coords[1])]
+            except:
+                distances[idx] = float('inf')
+        return distances
+    
+    # Returns the distance between two nodes
+    def get_distance(self, coordsA, coordsB):
+        try:
+            return State.mainGraphDistances[self.coords2id(coordsA[0],coordsA[1])][self.coords2id(coordsB[0],coordsB[1])]
+        except:
+            print("Couldn't compute the distance from {} to {}".format(coordsA,coordsB), file=sys.stderr, flush=True)
+            return float('inf')
+        
+    '''# Returns a list of coords in which there are obstacles in a path between two positions
+    def is_path_clear(self, coordsA, coordsB):
+        path = State.mainGraphPaths[self.coords2id(coordsA)][self.coords2id(coordsB)]
+        obstacles = []
+        for pos in path:
+            if not self.is_free(pos[0],pos[1]):
+                obstacles.append(pos)
+        return obstacles'''
+    
+    def coords2id(self, i,j):
+        return i*self.MAX_COL + j
+  
+    def id2coords(self, id):
+        return (int(id/self.MAX_COL),id % self.MAX_COL)
+    
+    ############### END OF GRAPH METHODS ###############
+    
 
     def __repr__(self):
         lines = []
@@ -331,7 +400,6 @@ class State:
             for col in range(State.MAX_COL):
                 cont=False
                
-                
                 for box in self.boxes:
                     #print(str(box.is_at(row,col)), file=sys.stderr, flush=True)
                     if box.is_at(row,col):  
