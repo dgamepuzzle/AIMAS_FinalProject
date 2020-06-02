@@ -306,11 +306,11 @@ class Heuristic(metaclass=ABCMeta):
         state.debugDistances[3] = dist        
         return dist
 
-    def punish_unassigned_boxes(self,state: 'State') -> 'int':
+    def punish_unassigned_boxes(self, state: 'State') -> 'int':
         
         # A weight denoting the punishment of having unassigned and non-
         # completed boxes in the level
-        loneBoxMultiplier = 1000
+        loneBoxMultiplier = 100
         
         # Punish boxes that are unassigned and are not yet in their goals
         boxIdsToBePunished = set([box.id for box in state.boxes])
@@ -327,9 +327,15 @@ class Heuristic(metaclass=ABCMeta):
         
         # Check if there are more goals for the remaining boxes
         # If not, it's not necessary to punish them...
-        
-        
-        dist = (len(boxIdsToBePunished) * loneBoxMultiplier)
+        box_count = 0
+        box_letters = [state.boxes[i].letter.lower() for i in boxIdsToBePunished]
+        box_set = set(box_letters)
+        for letter in box_set:
+            #print('{} += {} {} boxes unassigned - {} {} boxes without goal'.format(box_count,box_letters.count(letter),letter,State.boxSurplus[letter],letter), file=sys.stderr, flush=True)
+            box_count += box_letters.count(letter) - State.boxSurplus[letter]
+        #print('box_count = {} (from {} unassigned)'.format(box_count,len(boxIdsToBePunished)), file=sys.stderr, flush=True)
+        #time.sleep(10)
+        dist = ((box_count) * loneBoxMultiplier)
         state.debugDistances[4] = dist
         return dist
                

@@ -114,18 +114,6 @@ class State:
                             # Save wall position.
                             State.walls[row][col] = True
                 
-                # Convert unmovable boxes to walls
-                box_colors = set([box.color for box in self.boxes])
-                agent_colors = set([agent.color for agent in self.agents])
-                for color in box_colors:
-                    if color not in agent_colors:
-                        box_coords = [box.coords for box in self.boxes if box.color == color]
-                        self.boxes = [box for box in self.boxes if box.coords in box_coords]
-                        for coords in box_coords:
-                            State.mainGraph.remove_node(self.coords2id(coords[0],coords[1]))
-                            State.walls[coords[0]][coords[1]] = True
-                        State.colors = {key:val for key, val in State.colors.items() if val != color}
-                
                 # Order the agents by their number
                 self.agents.sort(key=lambda x: int(x.number))
                 
@@ -133,8 +121,28 @@ class State:
                 self.boxes.sort(key=lambda x: int(x.id))
                 self.goals.sort(key=lambda x: int(x.id))
                 
-                # Count boxes for the box surplus
+                # Pre-processing for start state
                 if not goal_state:
+                    
+                    # Convert unmovable boxes to walls
+                    update_ids = False
+                    box_colors = set([box.color for box in self.boxes])
+                    agent_colors = set([agent.color for agent in self.agents])
+                    for color in box_colors:
+                        if color not in agent_colors:
+                            update_ids = True
+                            box_coords = [box.coords for box in self.boxes if box.color == color]
+                            self.boxes = [box for box in self.boxes if box.coords not in box_coords]
+                            for coords in box_coords:
+                                State.mainGraph.remove_node(self.coords2id(coords[0],coords[1]))
+                                State.walls[coords[0]][coords[1]] = True
+                            State.colors = {key:val for key, val in State.colors.items() if val != color}
+                    if update_ids: # If some boxes have been removed it's necessary to update their ids
+                        self.boxes.sort(key=lambda x: int(x.id))
+                        for idx,box in enumerate(self.boxes):
+                            box.id = idx
+                    
+                    # Count boxes for the box surplus
                     box_letters = [i.letter for i in self.boxes]
                     box_set = set(box_letters)
                     for letter in box_set:
@@ -162,6 +170,13 @@ class State:
                     goal_set = set(goal_letters)
                     for letter in goal_set:
                         State.goalsCount[letter.lower()] = goal_letters.count(letter)
+                    
+                    # Compute box surplus per box-goal letters
+                    for letter in State.boxesCount.keys():
+                        try:
+                            State.boxSurplus[letter] = State.boxesCount[letter] - State.goalsCount[letter]
+                        except:
+                            State.boxSurplus[letter] = State.boxesCount[letter]
                 
             except Exception as ex:
                 print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
