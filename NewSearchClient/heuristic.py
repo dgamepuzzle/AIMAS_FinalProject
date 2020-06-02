@@ -80,7 +80,6 @@ class Heuristic(metaclass=ABCMeta):
             # goal1    1    5    3
             # goal2    8    7    5
             # goal3    2    10   7
-            
             distMatrix = [[goalDistsLetter[i][boxCoordsLetter[j][0]][boxCoordsLetter[j][1]] for j in range(box_cnt)] for i in range(goal_cnt)]
             
             # Assign a box to each of the goals with the Hungarian algorithm
@@ -171,14 +170,6 @@ class Heuristic(metaclass=ABCMeta):
             state.goalBoxAssignments[color] = [assignment for assignment in state.goalBoxAssignments[color] if assignment[1] in boxIdsWithAgents]
         
         
-        '''
-        print('GOAL-BOX', file=sys.stderr, flush=True)
-        print(state.goalBoxAssignments, file=sys.stderr, flush=True)
-        print('AGENT-BOX', file=sys.stderr, flush=True)
-        print(state.agentBoxAssignments, file=sys.stderr, flush=True)
-        '''
-        
- 
     def distance_already_completed_goals(self, state: 'State')-> 'int':
         
         # A weight denoting the punishment given for pushing already completed
@@ -338,6 +329,40 @@ class Heuristic(metaclass=ABCMeta):
         dist = ((box_count) * loneBoxMultiplier)
         state.debugDistances[4] = dist
         return dist
+    
+    def obstacles_in_assigned_paths(self, state: 'State') -> 'int':
+        
+        # A weight denoting the punishment of having obstacles in the paths
+        # within the goal-box and agent-box assignments
+        pathObstacleMultiplier = 5
+        num_obs = 0
+        
+        '''
+        print('GOAL-BOX', file=sys.stderr, flush=True)
+        print(state.goalBoxAssignments, file=sys.stderr, flush=True)
+        print('AGENT-BOX', file=sys.stderr, flush=True)
+        print(state.agentBoxAssignments, file=sys.stderr, flush=True)
+        '''
+        
+        for letter in state.goalBoxAssignments.keys():
+            for assigGB in state.goalBoxAssignments[letter]:
+                goal = state.goals[assigGB[0]]
+                box = state.boxes[assigGB[1]]
+                for obstacle in state.is_path_clear(box.coords,goal.coords): num_obs += 1
+                #print('GOAL-BOX-PATH[{},{}] -> num_obs = {}'.format(box.coords,goal.coords,num_obs), file=sys.stderr, flush=True)
+        
+        for color in state.agentBoxAssignments.keys():
+            for assigAB in state.agentBoxAssignments[color]:
+                #print('AGENT-BOX: {}'.format(assigAB), file=sys.stderr, flush=True)
+                agent = state.agents[int(assigAB[0])]
+                box = state.boxes[assigAB[1]]
+                for obstacle in state.is_path_clear(agent.coords,box.coords): num_obs += 1
+                #print('AGENT-BOX-PATH[{},{}] -> num_obs = {}'.format(agent.coords,box.coords,num_obs), file=sys.stderr, flush=True)
+        
+        #time.sleep(10)
+        dist = num_obs*pathObstacleMultiplier
+        state.debugDistances[5] = dist
+        return dist
                
     def real_dist(self, state: 'State') -> 'int':
         
@@ -361,7 +386,7 @@ class Heuristic(metaclass=ABCMeta):
         
         totalDist += self.punish_unassigned_boxes(state)
         
-                
+        totalDist += self.obstacles_in_assigned_paths(state)
         
         # Reset goal-box box-agent assignments, if needed
         if self.doResetAssignments:

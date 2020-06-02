@@ -63,7 +63,7 @@ class State:
             self.h = -1
             State.walls = [[False for _ in range(State.MAX_COL)] for _ in range(State.MAX_ROW)]
             
-            self.debugDistances=[0]*5
+            self.debugDistances=[0]*6
             
             # Parse full level (build static graph and save static/non-static entities).
             try:
@@ -261,7 +261,9 @@ class State:
                         actions.append(action)     
         return actions
     
-    
+    # Execute the corresponding actions for all agents.
+    # If a collision occurs, the method returns False
+    # If all the actions are executed correctly, returns True
     def update_positions(self) -> 'bool':
         for idx, action in enumerate(self.jointaction):
             if action.action_type is ActionType.NoOp:
@@ -455,8 +457,6 @@ class State:
                          line.append(goal.letter.lower())
                          cont = True
                          
-                
-                
                 if cont: continue
                 if self.walls[row][col]: 
                     line.append('+')
