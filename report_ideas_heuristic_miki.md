@@ -4,7 +4,7 @@ We have developed a centralized planner that always keeps the agents busy, while
 
 ## Related work
 
-The Hungarian algorithm [0] is a costly O($n^3$) operation (where n represents the amount of boxes), and as a result, many papers on Sokoban solvers disregard it in favour of faster, but less precise approximation algorithms. The ones that actually apply this minimum-cost matching algorithm either do not go into the implementation details, or apply it only in single-agent Sokoban levels. (Will include some references here)
+The Hungarian algorithm [1] is a costly O($n^3$) operation (where n represents the amount of boxes), and as a result, some papers on Sokoban solvers disregard it in favour of faster, but less precise approximation algorithms [2]. The ones that actually apply this minimum-cost matching algorithm either do not go into the implementation details, or apply it only in single-agent Sokoban levels [3][4].
 
 In contrast to these solvers, We have come up with an approach that generalizes the use of Hungarian algorithm, so it can work with both single- and multi-agent levels.
 
@@ -51,6 +51,14 @@ in which $w_1...w_5$ are weights corresponding to the "importance" of each heuri
 
 
 # Literature (to be extended)
-[0][Hungarian algorithm](https://findit.dtu.dk/en/catalog/2520163102)
+[1][Kuhn, H. W, P. 2015. The Hungarian method for the assignment problem in Naval Research Logistics 52(1):7-21](https://findit.dtu.dk/en/catalog/2520163102)
 
-[1][Thesis on Sokoban solver that uses Hungarian algorithm](https://baldur.iti.kit.edu/theses/SokobanPortfolio.pdf)
+[2][Froleyks, N. 2016. Using an Algorithm Portfolio to Solve Sokoban](https://baldur.iti.kit.edu/theses/SokobanPortfolio.pdf)
+
+[3][Junghanns, A. 2009. Pushing the Limits: New Developments in Single-Agent Search](https://findit.dtu.dk/en/catalog/2261200197)
+
+[4][Virkkala, T. 2011. Solving Sokoban, University of Helsinki](http://sokoban.dk/wp-content/uploads/2016/02/Timo-Virkkala-Solving-Sokoban-Masters-Thesis.pdf)
+
+
+
+
