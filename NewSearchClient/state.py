@@ -40,7 +40,7 @@ class State:
     
     mainGraph = nx.Graph()
     mainGraphDistances = defaultdict()
-    mainGraphPaths = defaultdict()
+    #mainGraphPaths = defaultdict()
     
     def __init__(self, copy: 'State' = None, level_lines = "", goal_state = False):
         self._hash = None
@@ -63,7 +63,7 @@ class State:
             self.h = -1
             State.walls = [[False for _ in range(State.MAX_COL)] for _ in range(State.MAX_ROW)]
             
-            self.debugDistances=[0]*6
+            self.debugDistances=[0]*5
             
             # Parse full level (build static graph and save static/non-static entities).
             try:
@@ -151,9 +151,9 @@ class State:
                 # Pre-compute distances between all nodes in the graph
                 else:
                     print('Pre-computing paths & distances for the level...', file=sys.stderr, flush=True)
-                    paths = nx.all_pairs_shortest_path(State.mainGraph)
+                    '''paths = nx.all_pairs_shortest_path(State.mainGraph)
                     for node_paths in paths:
-                        State.mainGraphPaths[node_paths[0]] = node_paths[1]
+                        State.mainGraphPaths[node_paths[0]] = node_paths[1]'''
                     dists = nx.all_pairs_shortest_path_length(State.mainGraph)
                     for node_dists in dists:
                         State.mainGraphDistances[node_dists[0]] = node_dists[1]
@@ -410,14 +410,14 @@ class State:
             return float('inf')
         
     # Returns a list of coords in which there are obstacles in a path between two positions
-    def is_path_clear(self, coordsA, coordsB):
+    '''def is_path_clear(self, coordsA, coordsB):
         path = State.mainGraphPaths[self.coords2id(coordsA[0],coordsA[1])][self.coords2id(coordsB[0],coordsB[1])]
         obstacles = []
         for pos in path:
             coords = self.id2coords(pos)
             if not self.is_free(coords[0],coords[1]):
                 obstacles.append(coords)
-        return obstacles
+        return obstacles'''
     
     def coords2id(self, i,j):
         return i*self.MAX_COL + j

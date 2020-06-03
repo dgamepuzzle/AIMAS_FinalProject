@@ -301,7 +301,7 @@ class Heuristic(metaclass=ABCMeta):
         
         # A weight denoting the punishment of having unassigned and non-
         # completed boxes in the level
-        loneBoxMultiplier = 100
+        loneBoxMultiplier = 1000
         
         # Punish boxes that are unassigned and are not yet in their goals
         boxIdsToBePunished = set([box.id for box in state.boxes])
@@ -330,19 +330,13 @@ class Heuristic(metaclass=ABCMeta):
         state.debugDistances[4] = dist
         return dist
     
+    '''
     def obstacles_in_assigned_paths(self, state: 'State') -> 'int':
         
         # A weight denoting the punishment of having obstacles in the paths
         # within the goal-box and agent-box assignments
         pathObstacleMultiplier = 5
         num_obs = 0
-        
-        '''
-        print('GOAL-BOX', file=sys.stderr, flush=True)
-        print(state.goalBoxAssignments, file=sys.stderr, flush=True)
-        print('AGENT-BOX', file=sys.stderr, flush=True)
-        print(state.agentBoxAssignments, file=sys.stderr, flush=True)
-        '''
         
         for letter in state.goalBoxAssignments.keys():
             for assigGB in state.goalBoxAssignments[letter]:
@@ -363,6 +357,7 @@ class Heuristic(metaclass=ABCMeta):
         dist = num_obs*pathObstacleMultiplier
         state.debugDistances[5] = dist
         return dist
+    '''
                
     def real_dist(self, state: 'State') -> 'int':
         
@@ -386,7 +381,7 @@ class Heuristic(metaclass=ABCMeta):
         
         totalDist += self.punish_unassigned_boxes(state)
         
-        totalDist += self.obstacles_in_assigned_paths(state)
+        #totalDist += self.obstacles_in_assigned_paths(state)
         
         # Reset goal-box box-agent assignments, if needed
         if self.doResetAssignments:
