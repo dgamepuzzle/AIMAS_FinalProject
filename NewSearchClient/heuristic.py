@@ -301,7 +301,7 @@ class Heuristic(metaclass=ABCMeta):
         
         # A weight denoting the punishment of having unassigned and non-
         # completed boxes in the level
-        loneBoxMultiplier = 100
+        loneBoxMultiplier = 1000
         
         # Punish boxes that are unassigned and are not yet in their goals
         boxIdsToBePunished = set([box.id for box in state.boxes])
@@ -316,17 +316,7 @@ class Heuristic(metaclass=ABCMeta):
             if boxId in boxIdsToBePunished:
                 boxIdsToBePunished.remove(boxId)
         
-        # Check if there are more goals for the remaining boxes
-        # If not, it's not necessary to punish them...
-        box_count = 0
-        box_letters = [state.boxes[i].letter.lower() for i in boxIdsToBePunished]
-        box_set = set(box_letters)
-        for letter in box_set:
-            #print('{} += {} {} boxes unassigned - {} {} boxes without goal'.format(box_count,box_letters.count(letter),letter,State.boxSurplus[letter],letter), file=sys.stderr, flush=True)
-            box_count += box_letters.count(letter) - State.boxSurplus[letter]
-        #print('box_count = {} (from {} unassigned)'.format(box_count,len(boxIdsToBePunished)), file=sys.stderr, flush=True)
-        #time.sleep(10)
-        dist = ((box_count) * loneBoxMultiplier)
+        dist = (len(boxIdsToBePunished) * loneBoxMultiplier)
         state.debugDistances[4] = dist
         return dist
     
@@ -336,13 +326,6 @@ class Heuristic(metaclass=ABCMeta):
         # within the goal-box and agent-box assignments
         pathObstacleMultiplier = 5
         num_obs = 0
-        
-        '''
-        print('GOAL-BOX', file=sys.stderr, flush=True)
-        print(state.goalBoxAssignments, file=sys.stderr, flush=True)
-        print('AGENT-BOX', file=sys.stderr, flush=True)
-        print(state.agentBoxAssignments, file=sys.stderr, flush=True)
-        '''
         
         for letter in state.goalBoxAssignments.keys():
             for assigGB in state.goalBoxAssignments[letter]:

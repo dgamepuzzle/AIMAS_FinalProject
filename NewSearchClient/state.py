@@ -23,9 +23,11 @@ class State:
     goals = []
     colors = []
     walls = []
+    '''
     boxesCount = defaultdict()
     goalsCount = defaultdict()
     boxSurplus = defaultdict()
+    '''
     goalDistancesByLetter = defaultdict(list)
     goalDistances = []                              # Store the references of the above goal distance arrays in a
                                                     # flat array for easier searchhing
@@ -143,10 +145,10 @@ class State:
                             box.id = idx
                     
                     # Count boxes for the box surplus
-                    box_letters = [i.letter for i in self.boxes]
+                    '''box_letters = [i.letter for i in self.boxes]
                     box_set = set(box_letters)
                     for letter in box_set:
-                        State.boxesCount[letter.lower()] = box_letters.count(letter)
+                        State.boxesCount[letter.lower()] = box_letters.count(letter)'''
                 
                 # Pre-compute distances between all nodes in the graph
                 else:
@@ -165,6 +167,7 @@ class State:
                         State.goalIds[goal.letter.lower()].append(goal.id)
                     print('Pre-computing of paths & distances completed succesfully!', file=sys.stderr, flush=True)
                     
+                    '''
                     # Count goals for the box surplus
                     goal_letters = [i.letter for i in self.goals]
                     goal_set = set(goal_letters)
@@ -177,6 +180,7 @@ class State:
                             State.boxSurplus[letter] = State.boxesCount[letter] - State.goalsCount[letter]
                         except:
                             State.boxSurplus[letter] = State.boxesCount[letter]
+                    '''
                 
             except Exception as ex:
                 print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
