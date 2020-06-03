@@ -84,9 +84,13 @@ class State:
                             
                             # Parse agents.
                             if char in "0123456789":
-                                color = State.colors[char]
-                                self.agents.append(Agent(char,color,(row, col)))
-                                #print("Saving agent at "+ str((row,col)), file=sys.stderr, flush=True)
+                                if goal_state: #Parse agent goals
+                                    State.goals.append(Goal(char,(row, col)))
+                                    #print("adding goal at "+ str((row,col)), file=sys.stderr, flush=True)
+                                else: #parse agents
+                                    color = State.colors[char]
+                                    self.agents.append(Agent(char,color,(row, col)))
+                                    #print("Saving agent at "+ str((row,col)), file=sys.stderr, flush=True)
                                 
                             # Parse boxes.
                             elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
@@ -184,6 +188,7 @@ class State:
         #print(str(perms), file=sys.stderr, flush=True)
         
         # Generate a children state for each permutation.
+        print("PERMS: "+str(len(perms)), file=sys.stderr, flush=True)
         for perm in perms:
             child = State(self)
             child.jointaction = perm
@@ -287,7 +292,11 @@ class State:
                     #print(str(goal.coords) +" = "+  str(box.coords), file=sys.stderr, flush=True)
                     goal_is_statisfied=True
                     break
-            
+            for agent in self.agents:
+                if(goal.letter == str(agent.number) and goal.coords == agent.coords):
+                    #print(str(goal.coords) +" = "+  str(box.coords), file=sys.stderr, flush=True)
+                    goal_is_statisfied=True
+                    break
             if not goal_is_statisfied: return False   
         return True
 

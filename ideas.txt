@@ -8,7 +8,9 @@ AIMAS IDEAS:
 
 Now for each sublevel:
 
-1.Rank tasks in order of completion.
+1.Rank tasks in order of completion. (not done)
+
+2. Assign tasks to
 
 
 
